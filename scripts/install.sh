@@ -156,7 +156,7 @@ chmod 700 "$target/local"
 mkdir -p /nix/var/nix/gcroots
 ln -s "$(readlink -f /run/current-system)" "/nix/var/nix/gcroots/bspwm-before-$(basename "$backup")"
 printf 'Profile: %s\nBackup: %s\nDeployment: %s\n' "$profile" "$backup" "$target"
-nix --extra-experimental-features 'nix-command flakes' flake lock "path:$target"
+nix --extra-experimental-features 'nix-command flakes' flake update --flake "path:$target" bspwm
 case "$mode" in
   prepare) printf 'Prepared only. Next: sudo nixos-rebuild build --flake path:%s#current\n' "$target" ;;
   build|switch)
