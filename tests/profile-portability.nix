@@ -18,6 +18,8 @@ assert universal.systemd.services.hiddify-gui.serviceConfig.User == "portableuse
 assert universal.systemd.services.hiddify-gui.environment.XAUTHORITY == "/home/portableuser/.Xauthority";
 assert universal.systemd.services.hiddify-gui.environment.XDG_RUNTIME_DIR == "/run/user/1007";
 assert !universal.services.openssh.enable;
+assert !universal.virtualisation.virtualbox.host.enable;
+assert !huawei.virtualisation.virtualbox.host.enable;
 assert !universal.systemd.services ? matebook-audio-init;
 assert !(builtins.elem "amd_pstate=active" universal.boot.kernelParams);
 assert universal.bspwmBuild.ui.backlight == null;
