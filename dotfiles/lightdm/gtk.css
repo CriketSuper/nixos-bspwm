@@ -1,0 +1,16 @@
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+
+#login_window {
+  background-image: none;
+  background-color: rgba(24, 24, 36, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  color: #f6f5fa;
+}
+
+#content_frame,
+#buttonbox_frame {
+  background-image: none;
+  background-color: transparent;
+}

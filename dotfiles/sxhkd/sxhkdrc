@@ -1,0 +1,125 @@
+# Applications
+super + Return
+    alacritty
+
+super + d
+    rofi -show drun
+
+super + x
+    $HOME/.config/scripts/power-menu.sh
+
+super + w
+    $HOME/.config/scripts/random_wallpaper.sh
+
+super + l
+    $HOME/.config/scripts/screen-lock.sh
+
+# Toggle a saved window position; update it after moving the window.
+super + shift + z
+    $HOME/.config/scripts/frozen-window.sh toggle
+
+super + shift + ctrl + z
+    $HOME/.config/scripts/frozen-window.sh freeze
+
+super + shift + alt + z
+    $HOME/.config/scripts/frozen-window.sh thaw
+
+# Clipboard history and selected shortcuts from the original Arch build.
+super + v
+    CM_LAUNCHER=rofi clipmenu -i
+
+super + shift + e
+    rofi -modi emoji -show emoji
+
+super + shift + k
+    alacritty -e calcurse
+
+super + shift + v
+    VirtualBox
+
+super + shift + a
+    hiddify
+
+super + ctrl + a
+    v2raya-ui
+
+super + p
+    $HOME/.config/scripts/toggle-polybar.sh
+
+super + shift + {f,n,p,t,i,x,c}
+    {firefox, thunar, pavucontrol, Telegram, firefox --private-window, $HOME/.config/scripts/color-picker.sh, $HOME/.config/scripts/calculator.sh}
+
+Print
+    flameshot gui
+
+# Audio and display
+XF86Audio{RaiseVolume,LowerVolume,Mute}
+    $HOME/.config/scripts/volume.sh {up,down,mute}
+
+XF86AudioMicMute
+    $HOME/.config/scripts/volume.sh mic-mute
+
+XF86MonBrightness{Up,Down}
+    $HOME/.config/scripts/brightness.sh {up,down}
+
+# Reload hotkeys
+super + Escape + r
+    pkill -USR1 -x sxhkd; notify-send -t 1200 sxhkd "Configuration reloaded"
+
+# BSPWM session
+ctrl + shift + {q,r}
+    bspc {quit,wm -r}
+
+super + c
+    bspc node -c
+
+super + ctrl + shift + c
+    bspc node -k
+
+super + space
+    bspc node -t "~"{floating,tiled}
+
+super + {t,ctrl + t,f}
+    bspc node -t {tiled,pseudo_tiled,~fullscreen}
+
+alt + {_,shift + }Tab
+    bspc node -f {next.local,prev.local}
+
+# Focus and swap
+super + {h,j,k,l}
+    bspc node -f {west,south,north,east}
+
+super + shift + {h,j,k,l}
+    bspc node -s {west,south,north,east}
+
+super + {grave,Tab}
+    bspc {node,desktop} -f last
+
+super + {_,shift + }{1-9}
+    bspc {desktop -f,node -d} '{1-9}'
+
+# Move and resize
+super + ctrl + {h,j,k,l}
+    bspc node -z {left -20 0,bottom 0 20,top 0 -20,right 20 0}
+
+super + ctrl + shift + {h,j,k,l}
+    bspc node -z {right -20 0,top 0 20,bottom 0 -20,left 20 0}
+
+super + alt + {h,j,k,l}
+    bspc node -p {west,south,north,east}
+
+super + ctrl + space
+    bspc node -p cancel
+
+super + ctrl + {m,x,y,z}
+    bspc node -g {marked,locked,sticky,private}
+
+super + g
+    bspc node -s biggest.window
+
+# Physical monitors (workspaces 1-9 remain global).
+super + ctrl + p
+    $HOME/.config/scripts/display-menu.sh
+
+super + {_,shift + }{bracketleft,bracketright}
+    bspc {monitor -f,node -m} {prev,next}

@@ -1,0 +1,92 @@
+configuration {
+    modi: "run,drun,window";
+    font: "JetBrainsMono Nerd Font 14";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    terminal: "alacritty";
+    drun-display-format: "{icon} {name}";
+    disable-history: false;
+    hide-scrollbar: true;
+    display-drun: "  Apps ";
+    display-run: "  Run ";
+    display-window: "  Windows ";
+    sidebar-mode: true;
+}
+
+@theme "catppuccin"
+
+window {
+    width: 640px;
+    border: 3px;
+    border-radius: 10px;
+    border-color: @border-col;
+    background-color: @bg-col;
+}
+
+mainbox {
+    padding: 16px;
+    background-color: @bg-col;
+}
+
+inputbar {
+    children: [ prompt, entry ];
+    spacing: 10px;
+    background-color: @bg-col;
+}
+
+prompt {
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: @blue;
+    text-color: @bg-col;
+}
+
+entry {
+    padding: 8px;
+    text-color: @fg-col;
+    background-color: @bg-col;
+    placeholder: "Search";
+}
+
+listview {
+    margin: 12px 0 0;
+    lines: 6;
+    columns: 2;
+    spacing: 4px;
+    background-color: @bg-col;
+}
+
+element {
+    padding: 8px;
+    border-radius: 6px;
+    background-color: @bg-col;
+    text-color: @fg-col;
+}
+
+element-icon {
+    size: 24px;
+}
+
+element-text, element-icon {
+    background-color: inherit;
+    text-color: inherit;
+}
+
+mode-switcher {
+    background-color: @bg-col;
+}
+
+button {
+    background-color: @bg-col;
+    text-color: @fg-col;
+}
+
+button selected {
+    background-color: @selected-col;
+    text-color: @fg-col2;
+}
+
+element selected {
+    background-color: @selected-col;
+    text-color: @fg-col2;
+}
