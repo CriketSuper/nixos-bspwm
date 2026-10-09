@@ -34,7 +34,6 @@
 | Super + Shift + P | Настройки звука Pavucontrol |
 | Super + Shift + T | Telegram |
 | Super + Shift + I | Приватное окно Firefox |
-| Super + Shift + V | VirtualBox |
 | Super + Shift + E | Выбор эмодзи |
 | Super + Shift + C | Калькулятор; результат копируется в буфер обмена |
 | Super + Shift + X | Пипетка цвета; повторное нажатие закрывает её |

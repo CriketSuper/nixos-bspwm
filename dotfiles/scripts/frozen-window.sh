@@ -30,7 +30,6 @@ launcher_for() {
     thunar) printf 'thunar' ;;
     telegramdesktop|telegram-desktop) printf 'telegram' ;;
     chromium|chromium-browser) printf 'chromium' ;;
-    virtualbox) printf 'virtualbox' ;;
     *) printf 'manual' ;;
   esac
 }
@@ -149,7 +148,6 @@ start_application() {
     thunar) thunar >/dev/null 2>&1 & ;;
     telegram) Telegram >/dev/null 2>&1 & ;;
     chromium) chromium >/dev/null 2>&1 & ;;
-    virtualbox) VirtualBox >/dev/null 2>&1 & ;;
   esac
 }
 

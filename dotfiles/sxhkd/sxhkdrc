@@ -34,8 +34,6 @@ super + shift + e
 super + shift + k
     alacritty -e calcurse
 
-super + shift + v
-    VirtualBox
 
 super + shift + a
     hiddify

@@ -32,9 +32,5 @@ let cfg = config.bspwmBuild; in {
     libraries = with pkgs; [ stdenv.cc.cc.lib gcc.cc.lib glibc zlib ];
   };
   virtualisation.docker.enable = cfg.virtualisation.enable;
-  virtualisation.virtualbox.host = {
-    enable = cfg.virtualisation.enable;
-    enableExtensionPack = cfg.virtualisation.enable;
-  };
   system.stateVersion = cfg.stateVersion;
 }
