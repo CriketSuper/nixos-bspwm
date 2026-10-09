@@ -1,11 +1,11 @@
 # Дополнительный ChatGPT desktop
 
 Codex CLI установлен из Nixpkgs. ChatGPT desktop из присланного RPM включается отдельно.
-RPM не публикуется в репозитории. Скопируйте официальный установочный файл на новый ПК, например в `/var/lib/bspwm-vendor`, и укажите в `/etc/nixos/local/private.nix`:
+RPM не публикуется в репозитории. Скопируйте официальный установочный файл на новый ПК, в `/etc/nixos/local/vendor/`, и укажите в `/etc/nixos/local/private.nix`:
 
 ```nix
 { ... }: {
-  bspwmBuild.vendor.chatgptSource = /var/lib/bspwm-vendor/ChatGPT-26.1002.52244-x86_64.rpm;
+  bspwmBuild.vendor.chatgptSource = ./vendor/ChatGPT-26.1002.52244-x86_64.rpm;
 }
 ```
 

@@ -82,7 +82,7 @@ VPN-подписки добавляются вручную на новом ПК:
 
 Присланные RPM **ChatGPT desktop, TG WS Proxy и LibreOffice 26.8** не входят в Git.
 Без RPM используется LibreOffice из Nixpkgs; ChatGPT desktop и TG WS Proxy не устанавливаются.
-Их можно включить локально по образцу [examples/private.nix](examples/private.nix), скопировав сами пакеты отдельно.
+Их можно включить локально по образцу [examples/private.nix](examples/private.nix), скопировав сами пакеты отдельно в `/etc/nixos/local/vendor/`. Пути `./vendor/...` вычисляются относительно локального `private.nix`.
 Codex CLI и ChatGPT desktop — разные приложения.
 
 ## Настройка и обновление
