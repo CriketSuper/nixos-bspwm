@@ -11,8 +11,8 @@ __pycache__/
 /private/
 /keys/
 hardware-configuration.nix
-local.nix
-private.nix
+/local.nix
+/private.nix
 *.key
 *.pem
 .env
