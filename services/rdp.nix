@@ -69,6 +69,10 @@ in {
           --replace-fail 'AllowRootLogin=true' 'AllowRootLogin=false' \
           --replace-fail 'TerminalServerUsers=tsusers' 'TerminalServerUsers=rdp-users' \
           --replace-fail 'AlwaysGroupCheck=false' 'AlwaysGroupCheck=true'
+        # The login dialog cannot switch layouts; keep authentication in US English.
+        substituteInPlace "$out/xrdp.ini" \
+          --replace-fail '#xrdp.override_keylayout=0x00000409' 'xrdp.override_keylayout=0x00000409' \
+          --replace-fail '#ls_title=My Login Title' 'ls_title=XRDP Login - EN (US)'
         # Only offer the configured Xorg desktop, not arbitrary VNC gateways.
         ${pkgs.gawk}/bin/awk '
           /^\[/ { section = $0 }
