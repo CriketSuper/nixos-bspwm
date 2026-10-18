@@ -18,6 +18,9 @@ assert universal.systemd.services.hiddify-gui.serviceConfig.User == "portableuse
 assert universal.systemd.services.hiddify-gui.environment.XAUTHORITY == "/home/portableuser/.Xauthority";
 assert universal.systemd.services.hiddify-gui.environment.XDG_RUNTIME_DIR == "/run/user/1007";
 assert !universal.services.openssh.enable;
+assert universal.services.xrdp.enable && huawei.services.xrdp.enable;
+assert universal.users.groups.rdp-users.members == [ "portableuser" ];
+assert !universal.security.pam.services.xrdp-sesman.allowNullPassword;
 assert !universal.virtualisation.virtualbox.host.enable;
 assert !huawei.virtualisation.virtualbox.host.enable;
 assert !universal.systemd.services ? matebook-audio-init;

@@ -48,6 +48,7 @@ pkill -STOP -u "$(id -u)" -x sxhkd 2>/dev/null || true
 export XSECURELOCK_PAM_SERVICE=xsecurelock
 export XSECURELOCK_SAVER=saver_mpv
 # Only the selected wallpaper is listed; never scan personal pictures/videos.
+# shellcheck disable=SC2016 # Evaluated later by the locker's video helper.
 export XSECURELOCK_LIST_VIDEOS_COMMAND='printf "%s\n" "$HOME/Pictures/wallpapers/5521453.jpg"'
 export XSECURELOCK_IMAGE_DURATION_SECONDS=86400
 export XSECURELOCK_VIDEOS_FLAGS='--no-config --loop-file=inf --panscan=1 --brightness=-30 --osd-level=0'
