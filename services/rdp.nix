@@ -9,6 +9,7 @@ let
       # Give a clear explanation instead of killing another session's panel.
       sessions=$(loginctl show-user "$(id -u)" -p Sessions --value 2>/dev/null || true)
       for session in $sessions; do
+        [ "$session" != "''${XDG_SESSION_ID:-}" ] || continue
         session_type=$(loginctl show-session "$session" -p Type --value 2>/dev/null || true)
         remote=$(loginctl show-session "$session" -p Remote --value 2>/dev/null || true)
         state=$(loginctl show-session "$session" -p State --value 2>/dev/null || true)
