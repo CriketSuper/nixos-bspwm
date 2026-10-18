@@ -74,6 +74,10 @@ sudo env PATH="$PATH" bash scripts/install.sh \
 Публичные/закрытые SSH-ключи владельца, UUID его разделов, WireGuard-сервер, VPN-подписки, пароли, почтовые/браузерные профили и данные приложений сюда не копируются.
 Владельцу текущего ноутбука не нужно запускать установщик поверх работающей системы, чтобы просто опубликовать репозиторий.
 
+## Удалённый рабочий стол
+
+xrdp включён в обоих профилях: отдельный BSPWM-сеанс, порт 3389. Вход по имени и паролю пользователя; перед входом тем же пользователем завершите его локальный графический сеанс. [Инструкция подключения](docs/rdp.md).
+
 ## Приложения
 
 Основные пакеты берутся из закреплённого Nixpkgs: Firefox, Chromium, Thunderbird, Seafile, WindTerm, LibreOffice, Telegram, Obsidian, Codex CLI и прочие приложения исходного рабочего стола.
@@ -115,6 +119,7 @@ shellcheck scripts/install.sh scripts/update.sh dotfiles/polybar/launch.sh
 ## Документация
 
 - [Установка, сохранение настроек и откат](docs/installation.md)
+- [Удалённый рабочий стол xrdp](docs/rdp.md)
 - [Горячие клавиши](docs/shortcuts.md)
 - [Дополнительные мониторы](docs/monitors.md)
 - [VPN](docs/vpn.md), [TLS fingerprint](docs/vpn-fingerprints.md)

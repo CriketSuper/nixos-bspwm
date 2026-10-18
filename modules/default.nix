@@ -8,8 +8,9 @@ let cfg = config.bspwmBuild; in {
     ../services/audio.nix ../services/bluetooth.nix
     ../services/network.nix ../services/xserver.nix ../services/displays.nix
     ../services/git.nix ../services/desktop-services.nix ../services/filesystems.nix
-    ../services/vpn.nix ../home.nix
+    ../services/vpn.nix ../services/rdp.nix ../home.nix
   ];
+  services.bspwmRdp = { enable = lib.mkDefault true; allowedUsers = [ cfg.username ]; };
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   hardware.enableRedistributableFirmware = true;

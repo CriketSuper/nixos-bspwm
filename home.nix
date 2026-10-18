@@ -67,6 +67,7 @@
         };
 
         file = {
+          "nix-docs/rdp.md".source = ./docs/rdp.md;
           "nix-docs/installation.md".source = ./docs/installation.md;
           "nix-docs/shortcuts.md".source = ./docs/shortcuts.md;
           "nix-docs/openvpn.md".source = ./docs/openvpn.md;

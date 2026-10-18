@@ -40,12 +40,21 @@ for device in /sys/class/hwmon/*; do
 done
 BAR_MODULES_CENTER='memory space cpu'
 [ -z "$BAR_TEMPERATURE" ] || BAR_MODULES_CENTER="temperature space $BAR_MODULES_CENTER"
-BAR_MODULES_RIGHT='volume xkeyboard round-left time round-right space network-status space powermenu tray'
+BAR_MODULES_RIGHT='volume xkeyboard round-left time round-right space network-status space powermenu'
 [ -z "$BAR_BACKLIGHT" ] || BAR_MODULES_RIGHT="backlight $BAR_MODULES_RIGHT"
 [ -z "$BAR_BATTERY" ] || BAR_MODULES_RIGHT="battery $BAR_MODULES_RIGHT"
 export BAR_BATTERY BAR_ADAPTER BAR_BACKLIGHT BAR_TEMPERATURE BAR_MODULES_CENTER BAR_MODULES_RIGHT
 
-xrandr --listactivemonitors | awk 'NR > 1 { print $NF }' | while read -r monitor; do
-  MONITOR="$monitor" polybar --reload top -c "$config" \
+
+active=$(xrandr --listactivemonitors)
+primary=$(printf '%s\n' "$active" | awk 'NR > 1 && $2 ~ /\*/ { print $NF; exit }')
+if [ -z "$primary" ]; then
+  primary=$(printf '%s\n' "$active" | awk 'NR == 2 { print $NF }')
+fi
+
+printf '%s\n' "$active" | awk 'NR > 1 { print $NF }' | while read -r monitor; do
+  bar=top
+  if [ "$monitor" = "$primary" ]; then bar=top-primary; fi
+  MONITOR="$monitor" polybar --reload "$bar" -c "$config" \
     >>"$log_dir/$monitor.log" 2>&1 &
 done

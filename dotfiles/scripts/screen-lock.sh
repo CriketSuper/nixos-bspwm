@@ -66,4 +66,13 @@ export XSECURELOCK_AUTH_SOUNDS=0
 export XSECURELOCK_PASSWORD_PROMPT=asterisks
 export XSECURELOCK_AUTH_TIMEOUT=60
 export XSECURELOCK_BLANK_TIMEOUT=300
+export XSECURELOCK_BLANK_DPMS_STATE=off
+# Blank the locked desktop without powering down an active external monitor.
+if xrandr --query | awk '
+  $2 == "connected" && $1 !~ /^(eDP|LVDS)/ &&
+  ($3 ~ /^[0-9]+x[0-9]+\+/ || ($3 == "primary" && $4 ~ /^[0-9]+x[0-9]+\+/)) { external = 1 }
+  END { exit !external }
+'; then
+  export XSECURELOCK_BLANK_DPMS_STATE=on
+fi
 xsecurelock

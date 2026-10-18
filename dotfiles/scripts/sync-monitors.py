@@ -9,6 +9,9 @@ import subprocess
 import time
 
 
+DESKTOP_COUNT = 12
+
+
 def run(*args, check=True):
     result = subprocess.run(args, text=True, capture_output=True)
     if check and result.returncode:
@@ -18,6 +21,18 @@ def run(*args, check=True):
 
 def state():
     return json.loads(run('bspc', 'wm', '-d'))
+
+
+def configure_power(monitors):
+    # Some HDMI monitors drop their connection after DPMS and require a replug.
+    # Keep video powered while an external output is active; laptop-only keeps
+    # the X11 session's original ten-minute idle timeout.
+    if any(not re.match(r'^(eDP|LVDS)', name) for name in monitors):
+        run('xset', 's', 'off')
+        run('xset', '-dpms')
+    else:
+        run('xset', 's', '600', '600')
+        run('xset', 'dpms', '600', '600', '600')
 
 
 def sync():
@@ -38,6 +53,7 @@ def sync():
         return
     active.sort()
     names = [entry[3] for entry in active]
+    configure_power(names)
     for _ in range(20):
         wm = state()
         available = {monitor['name'] for monitor in wm['monitors']}
@@ -52,16 +68,16 @@ def sync():
     sizes = {m['name']: len(m['desktops']) for m in wm['monitors']}
     existing = {desktop['name'] for monitor in wm['monitors']
                 for desktop in monitor['desktops']}
-    for number in range(1, 10):
+    for number in range(1, DESKTOP_COUNT + 1):
         if str(number) not in existing:
             run('bspc', 'monitor', monitors[0], '-a', str(number))
             owners[str(number)] = monitors[0]
             sizes[monitors[0]] += 1
-    # Primary gets 1-5 with two screens; three screens get 1-3, 4-6, 7-9.
-    count = min(len(monitors), 9)
+    # Primary gets 1-6 with two screens; three screens get 1-4, 5-8, 9-12.
+    count = min(len(monitors), DESKTOP_COUNT)
     offset = 1
     for index, monitor in enumerate(monitors[:count]):
-        size = 9 // count + (index < 9 % count)
+        size = DESKTOP_COUNT // count + (index < DESKTOP_COUNT % count)
         for number in range(offset, offset + size):
             source = owners[str(number)]
             if source != monitor:
@@ -82,7 +98,7 @@ def sync():
                 run('bspc', 'desktop', str(desktop['id']), '-r', check=False)
         remaining = [d['name'] for m in state()['monitors']
                      if m['name'] == monitor['name'] for d in m['desktops']]
-        numeric = sorted((n for n in remaining if n in map(str, range(1, 10))), key=int)
+        numeric = sorted((n for n in remaining if n in map(str, range(1, DESKTOP_COUNT + 1))), key=int)
         others = [n for n in remaining if n not in numeric]
         if remaining:
             run('bspc', 'monitor', monitor['name'], '-o', *numeric, *others)

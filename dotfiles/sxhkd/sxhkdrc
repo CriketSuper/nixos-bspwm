@@ -96,6 +96,9 @@ super + {grave,Tab}
 super + {_,shift + }{1-9}
     bspc {desktop -f,node -d} '{1-9}'
 
+super + {_,shift + }{0,minus,equal}
+    bspc {desktop -f,node -d} '{10,11,12}'
+
 # Move and resize
 super + ctrl + {h,j,k,l}
     bspc node -z {left -20 0,bottom 0 20,top 0 -20,right 20 0}
@@ -115,7 +118,7 @@ super + ctrl + {m,x,y,z}
 super + g
     bspc node -s biggest.window
 
-# Physical monitors (workspaces 1-9 remain global).
+# Physical monitors (workspaces 1-12 remain global).
 super + ctrl + p
     $HOME/.config/scripts/display-menu.sh
 
