@@ -1,131 +1,162 @@
-# BSPWM для NixOS
+# NixOS BSPWM
 
-Перенос оформления [Zproger/bspwm-dotfiles](https://github.com/Zproger/bspwm-dotfiles) на NixOS 26.05 с Home Manager.
-Одна ветка `main`, общая оболочка и два профиля оборудования.
+**Форк [Zproger/bspwm-dotfiles](https://github.com/Zproger/bspwm-dotfiles), полностью перенесённый с Arch Linux на NixOS.**
 
-| Профиль | Назначение |
+Оригинальную сборку для **Arch Linux** создал **[Zproger](https://github.com/Zproger)**. Этот репозиторий содержит её полный перенос на **NixOS**: системная конфигурация и пакеты описаны на Nix, пользовательское окружение управляется через Home Manager. В форке добавлены аппаратные профили, диалоговый установщик и дополнительные возможности рабочего стола.
+
+## Что внутри
+
+- NixOS 26.05, BSPWM, Polybar, Picom, Rofi, Alacritty, Fish и Dunst.
+- 12 рабочих столов, горячие клавиши, история буфера обмена, эмодзи и выбор обоев.
+- Экран входа LightDM и блокировка с индикатором раскладки.
+- Профили мониторов, перенос рабочих столов при отключении экрана, трей на основном мониторе.
+- PipeWire, NetworkManager, Bluetooth и базовые приложения для повседневной работы.
+- Hiddify, v2rayA/Xray и AmneziaVPN; OpenVPN через NetworkManager.
+- Отдельный удалённый сеанс BSPWM через xrdp.
+- **Диалоговый установщик**: выбор настроек в терминале после клонирования репозитория.
+
+Версии Nixpkgs и Home Manager закреплены в `flake.lock`. Личные данные и доступы на другой компьютер не копируются.
+
+## Профили
+
+| Профиль | Для чего |
 | --- | --- |
-| `huawei-matebook-d16` | Huawei MateBook D16 AMD, проверенная конфигурация BOM-WXX9: современное ядро, SOF, ES8316/ACP3x, Fn Lock, AMD-подсветка |
-| `universal` | Другие x86_64 ПК Intel/AMD; стандартное ядро и PipeWire, автоопределение батареи и подсветки, без исправлений кодека Huawei |
+| `huawei-matebook-d16` | Huawei MateBook D16 **AMD**, BOM-WXX9: современное ядро, SOF, настройки ES8316/ACP3x, Fn Lock и AMD-подсветки |
+| `universal` | Другие x86_64 ПК Intel/AMD: стандартное ядро и PipeWire, автоматическое определение батареи, подсветки и температуры |
 
-Рабочие столы, Polybar, Rofi, блокировка и оформление входа, горячие клавиши, история буфера, обои, многомониторные схемы и основные приложения общие.
-Nixpkgs закреплён на том же коммите, что на исходном ноутбуке; версии Nixpkgs/Home Manager и хеши находятся в `flake.lock`.
+Общая оболочка находится в одной ветке `main`; профиль определяет аппаратные дополнения.
+Huawei-профиль проверялся на исходном ноутбуке. Универсальный профиль прошёл сборку; совместимость конкретного нового ПК, GPU и док-станции проверяется отдельно.
 
-## Установка из Git на другой ПК
+## Быстрая установка
 
-Сначала установите NixOS обычным способом, создайте своего пользователя и подключитесь к интернету.
-Скрипт поддерживает **уже установленную NixOS на x86_64 с UEFI**. Он не форматирует диски и не переносит UUID разделов исходного ноутбука.
-Для BIOS, ARM, NVIDIA и нестандартных файловых систем см. [ручную установку](docs/installation.md).
+### Требования
 
-После публикации этого репозитория замените `YOUR_ACCOUNT/nixos-bspwm` на собственный адрес:
+Уже установленная **NixOS на x86_64 с UEFI**, подключение к интернету и обычный пользователь с паролем и правом sudo.
+Мастер настраивает установленную систему: разметка и форматирование дисков в него не входят.
+Поддерживаемая архитектура — x86_64. Для BIOS, NVIDIA, шифрования и других особых настроек используйте [ручную установку](docs/installation.md), сохраняя необходимые модули своего ПК.
+
+### Клонировать и запустить
+
+Скопируйте адрес репозитория из **Code → HTTPS** и подставьте его вместо `URL_РЕПОЗИТОРИЯ`:
 
 ```sh
-nix-shell -p git python3 --run 'git clone https://github.com/YOUR_ACCOUNT/nixos-bspwm.git'
+git clone URL_РЕПОЗИТОРИЯ nixos-bspwm
 cd nixos-bspwm
-sudo env PATH="$PATH" bash scripts/install.sh --profile universal --user YOUR_USER --mode build
+./install.sh
 ```
 
-Для такого же AMD MateBook используйте `--profile huawei-matebook-d16`.
-По умолчанию только сборка: экран входа, сеть и работающие приложения не переключаются.
-Перед применением посмотрите `/etc/nixos/local/hardware-configuration.nix` и `/etc/nixos/local/settings.nix`, затем:
+Если `git` ещё не установлен:
+
+```sh
+nix-shell -p git --run 'git clone URL_РЕПОЗИТОРИЯ nixos-bspwm'
+cd nixos-bspwm
+./install.sh
+```
+
+Мастер сам запросит sudo и при необходимости загрузит `dialog`, Git и Python во временное окружение Nix.
+При запуске по SSH нужен терминал: `ssh -t ...`.
+
+### Что можно выбрать
+
+1. Профиль: универсальный или Huawei MateBook D16 AMD.
+2. Существующего пользователя и имя компьютера.
+3. Часовой пояс и исходный `system.stateVersion` установленной системы.
+4. Инструменты разработки, Docker/QEMU, VPN-клиенты и xrdp.
+5. SSH по публичному ключу, порты SSH и RDP.
+6. Действие после просмотра сводки:
+   - **Собрать** — рекомендуемый вариант; активная система не переключается.
+   - **Собрать и применить** — после успешной сборки выполняется switch.
+   - **Только подготовить** — создаются конфиги и lock-файл.
+
+Пароль существующего пользователя сохраняется. Закрытые ключи и пароли мастер не запрашивает.
+До запуска установки можно отменить любой шаг.
+
+При обновлении существующего развёртывания мастер отдельно предлагает заменить Git-копию, сохранив содержимое `local/`. Его пользовательские настройки не перезаписываются; меняйте их в локальных модулях.
+
+## Установка через параметры
+
+Для автоматизации остаётся отдельный сценарий:
+
+```sh
+sudo env PATH="$PATH" bash scripts/install.sh \
+  --profile universal --user YOUR_USER --hostname my-pc --mode build
+```
+
+Все параметры: `bash scripts/install.sh --help`.
+Для Huawei замените профиль на `huawei-matebook-d16`.
+По завершении сборки применить результат можно отдельно:
 
 ```sh
 sudo env NIX_CONFIG='experimental-features = nix-command flakes' \
   nixos-rebuild switch --flake path:/etc/nixos#current
 ```
 
-Чтобы собрать и применить сразу:
-
-```sh
-sudo env PATH="$PATH" bash scripts/install.sh --profile universal --user YOUR_USER --mode switch
-```
-
-Можно запускать уже скачанный скрипт и клонировать указанный репозиторий внутри него:
-
-```sh
-sudo env PATH="$PATH" bash scripts/install.sh \
-  --repo https://github.com/YOUR_ACCOUNT/nixos-bspwm.git \
-  --ref main --profile universal --user YOUR_USER --mode build
-```
-
-`--mode prepare` только готовит конфиги и lock-файл.
-`--ssh-key /path/to/key.pub` включает SSH на порту 5555 с публичным ключом; без этого SSH выключен.
-Пароль существующего пользователя сохраняется. В репозитории нет `NOPASSWD` sudo.
-
-## Что остаётся локальным
-
-Установщик создаёт:
+## Где хранятся настройки
 
 ```text
 /etc/nixos/
-├── flake.nix                # Локальная сборка nixosConfigurations.current
-├── flake.lock               # Зафиксированный исходник репозитория
-├── bspwm-repo/              # Git-копия этого репозитория
+├── flake.nix                  # Локальная конфигурация этого ПК
+├── flake.lock
+├── bspwm-repo/                # Копия этого Git-репозитория
 └── local/
-    ├── hardware-configuration.nix  # Разделы и оборудование конкретного ПК
-    ├── settings.nix               # Пользователь, UID, hostname, stateVersion, SSH
+    ├── hardware-configuration.nix  # Оборудование и разделы этого ПК
+    ├── settings.nix               # Пользователь, имя ПК, выбранные компоненты
     └── private.nix                # Локальные дополнения
 ```
 
-Старый `configuration.nix` остаётся для справки, но после появления `flake.nix` сборка выполняется через flake.
-Полная копия прежних конфигов сохраняется в `/var/backups/nixos-bspwm/`; прежняя система защищена GC-root.
-Системный профиль сейчас использует `stateVersion = "26.05"`; Home Manager сохраняет отдельный `homeStateVersion = "25.05"`. Не повышайте эти значения при обычном обновлении без проверки изменения форматов данных. Скрипт сохраняет распознанное значение старого конфига; проверьте его перед применением, если старый конфиг был разбит на модули.
+Аппаратный конфиг генерируется на целевом ПК, UUID исходного ноутбука не используются.
+Резервные копии прежних конфигов находятся в `/var/backups/nixos-bspwm/`; предыдущая система сохраняется GC-root для отката.
+Журнал мастера: `/var/log/nixos-bspwm/`, доступен root.
 
-Публичные/закрытые SSH-ключи владельца, UUID его разделов, WireGuard-сервер, VPN-подписки, пароли, почтовые/браузерные профили и данные приложений сюда не копируются.
-Владельцу текущего ноутбука не нужно запускать установщик поверх работающей системы, чтобы просто опубликовать репозиторий.
+Не повышайте `system.stateVersion` при обычном обновлении: он задаёт совместимость данных. Для существующей системы оставляйте её прежнее значение. Системный профиль по умолчанию использует `26.05`, Home Manager — отдельное `homeStateVersion = "25.05"`.
+Пароли, личные SSH-ключи, VPN-подписки, WireGuard-серверы, браузерные/почтовые профили и данные приложений в Git не входят. Секреты не следует помещать в Nix-код, который попадает в Nix store.
+
+## Приложения и VPN
+
+Основные приложения берутся из закреплённого Nixpkgs: Firefox, Chromium, Thunderbird, Seafile, WindTerm, LibreOffice, Telegram, Obsidian, Codex CLI и другие.
+Hiddify 4.1.1 скачивается из официального выпуска с проверкой SHA-256; v2rayA/Xray и AmneziaVPN берутся из Nixpkgs.
+Подписки и ключи VPN импортируются пользователем на каждом ПК.
+
+Необязательные RPM **ChatGPT desktop, TG WS Proxy и LibreOffice 26.8** не распространяются через Git. Их можно включить в `local/private.nix` по [примеру](examples/private.nix), скопировав установочные файлы отдельно в `/etc/nixos/local/vendor/`.
+Без этих файлов устанавливается LibreOffice из Nixpkgs; ChatGPT desktop и TG WS Proxy не добавляются. Codex CLI и ChatGPT desktop — разные приложения.
 
 ## Удалённый рабочий стол
 
-xrdp включён в обоих профилях: отдельный BSPWM-сеанс, порт 3389. Вход по имени и паролю пользователя; перед входом тем же пользователем завершите его локальный графический сеанс. [Инструкция подключения](docs/rdp.md).
+При включённом xrdp подключайтесь из Windows через `mstsc` к `IP:3389` (либо выбранному порту), сеанс **Xorg**. Используются имя и пароль обычного пользователя.
+На экране авторизации закреплена **EN (US)**; после входа доступны EN/RU через Alt+Shift.
+Перед RDP-входом тем же пользователем завершите его локальный графический сеанс.
+[Подключение и диагностика xrdp](docs/rdp.md).
 
-## Приложения
-
-Основные пакеты берутся из закреплённого Nixpkgs: Firefox, Chromium, Thunderbird, Seafile, WindTerm, LibreOffice, Telegram, Obsidian, Codex CLI и прочие приложения исходного рабочего стола.
-Hiddify 4.1.1 собирается из официального выпуска с SHA-256; v2rayA/Xray и AmneziaVPN — из Nixpkgs.
-VPN-подписки добавляются вручную на новом ПК: готовая конфигурация клиента не содержит доступ к VPN.
-
-Присланные RPM **ChatGPT desktop, TG WS Proxy и LibreOffice 26.8** не входят в Git.
-Без RPM используется LibreOffice из Nixpkgs; ChatGPT desktop и TG WS Proxy не устанавливаются.
-Их можно включить локально по образцу [examples/private.nix](examples/private.nix), скопировав сами пакеты отдельно в `/etc/nixos/local/vendor/`. Пути `./vendor/...` вычисляются относительно локального `private.nix`.
-Codex CLI и ChatGPT desktop — разные приложения.
-
-## Настройка и обновление
-
-Оболочка: `dotfiles/`. Общие службы: `services/`. Пакеты: `packages/`. Аппаратные настройки: `profiles/`.
-Параметры пользователя/функций: [modules/options.nix](modules/options.nix), пример: [examples/settings.nix](examples/settings.nix).
-Отключение тяжёлых групп: `bspwmBuild.development.enable = false;`, `virtualisation.enable = false;`, `vpn.enable = false;` в локальном модуле.
-
-Обновление из Git сначала собирает результат, затем его можно применить:
+## Обновление и проверка
 
 ```sh
 sudo bash /etc/nixos/bspwm-repo/scripts/update.sh
 sudo nixos-rebuild switch --flake path:/etc/nixos#current
 ```
 
-Пины зависимостей меняются отдельно и намеренно: отредактируйте коммиты inputs в `flake.nix`, выполните `nix flake update`, проверьте оба профиля и закоммитьте новый lock-файл.
-Проверка параметризации: `nix eval --impure --json --expr 'import ./tests/profile-portability.nix { repo = builtins.getFlake (toString ./.); }'`.
-Результаты `nix flake check` используют тестовые разделы с меткой `*-test-only`; их нельзя устанавливать как систему — установка всегда генерирует аппаратный конфиг этого ПК.
-
-## Проверка
+Обновление сначала собирает результат. Версии Nixpkgs/Home Manager меняются отдельно: отредактируйте inputs в `flake.nix`, выполните `nix flake update` и проверьте оба профиля.
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' flake check
-shellcheck scripts/install.sh scripts/update.sh dotfiles/polybar/launch.sh
+shellcheck install.sh scripts/install.sh scripts/install-wizard.sh scripts/update.sh
 ```
 
-Проверены вычисление и сборка обоих профилей, параметризация пользователя, изолированная подготовка установки; сведения в [docs/verification.md](docs/verification.md).
-Поддержку конкретного нового оборудования проверяйте после установки: универсальный профиль не означает, что все GPU и док-станции имеют одинаковые драйверы.
+Результаты `checks` используют тестовые разделы и предназначены только для проверки сборки. Для реальной установки используется аппаратный конфиг целевого ПК.
+Подробности проверок: [docs/verification.md](docs/verification.md).
 
 ## Документация
 
 - [Установка, сохранение настроек и откат](docs/installation.md)
-- [Удалённый рабочий стол xrdp](docs/rdp.md)
 - [Горячие клавиши](docs/shortcuts.md)
 - [Дополнительные мониторы](docs/monitors.md)
-- [VPN](docs/vpn.md), [TLS fingerprint](docs/vpn-fingerprints.md)
+- [Удалённый рабочий стол xrdp](docs/rdp.md)
+- [VPN](docs/vpn.md) и [TLS fingerprint](docs/vpn-fingerprints.md)
 - [SSH и смена пароля](docs/ssh-access.md)
 - [OpenVPN](docs/openvpn.md)
 - [Дополнительный ChatGPT RPM](docs/chatgpt-update.md)
-- [Происхождение компонентов](THIRD_PARTY.md)
 
-Публикация выполняется владельцем; удалённый Git-сервер и remote пока не настроены.
+## Авторство и лицензии
+
+**[Zproger](https://github.com/Zproger)** — автор оригинального проекта [bspwm-dotfiles](https://github.com/Zproger/bspwm-dotfiles) для **Arch Linux**. Полный перенос на **NixOS**, Nix-модули, установщик и дальнейшие изменения относятся к этому форку.
+Исходный проект распространяется по MIT; его лицензия и уведомление об авторских правах сохранены в [LICENSE](LICENSE).
+Лицензии внешних программ, шрифтов и изображений учитываются отдельно: [THIRD_PARTY.md](THIRD_PARTY.md).

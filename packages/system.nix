@@ -2,6 +2,7 @@
 
 {
   environment.systemPackages = with pkgs; [
+    micro                   # Keep the default editor available without development tools
     # Аудио-видео система
     alsa-utils              # Утилита для звука
     alsa-plugins            # Плагины для Alsa

@@ -12,6 +12,8 @@ target=/etc/nixos
 ssh_key=''
 ssh_enable=false
 replace=false
+settings_json=''
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 usage() {
   cat <<'HELP'
@@ -25,6 +27,7 @@ Usage: sudo bash scripts/install.sh [options]
   --target DIR      Deployment directory, default: /etc/nixos
   --ssh-key FILE    Add this public SSH key and enable SSH on port 5555
   --enable-ssh      Enable SSH with key authentication (no keys added)
+  --settings-json FILE  Validated wizard settings (new deployment only)
   --replace        Replace an earlier deployment; keep its local settings
   --help           Show this help
 Requires an installed x86_64 NixOS system with UEFI and a normal user.
@@ -44,6 +47,7 @@ while [ "$#" -gt 0 ]; do
     --target) need_value "$@"; target=$2; shift 2 ;;
     --ssh-key) need_value "$@"; ssh_key=$2; ssh_enable=true; shift 2 ;;
     --enable-ssh) ssh_enable=true; shift ;;
+    --settings-json) need_value "$@"; settings_json=$2; shift 2 ;;
     --replace) replace=true; shift ;;
     --help|-h) usage; exit 0 ;;
     *) die "Unknown option: $1" ;;
@@ -84,6 +88,9 @@ fi
 for command in git nix nixos-generate-config python3 tar; do
   command -v "$command" >/dev/null || die "Missing command: $command (see README bootstrap command)."
 done
+settings_options=()
+if [ -n "$settings_json" ]; then settings_options=(--options "$settings_json"); fi
+python3 "$script_dir/render-settings.py" --validate-only "${settings_options[@]}"
 if [ -n "$ssh_key" ]; then
   [ -f "$ssh_key" ] || die "Public key file does not exist."
   ssh-keygen -lf "$ssh_key" >/dev/null || die "Not a valid public SSH key."
@@ -91,6 +98,9 @@ if [ -n "$ssh_key" ]; then
 fi
 if [ -e "$target/bspwm-repo" ] || [ -e "$target/flake.nix" ]; then
   "$replace" || die "Target contains a repository/flake. Use --replace after reviewing its configuration."
+fi
+if "$replace" && [ -f "$target/local/settings.nix" ] && [ -n "$settings_json" ]; then
+  die "Existing local settings are preserved; edit local/settings.nix instead of supplying --settings-json."
 fi
 mkdir -p "$target"
 stage=$(mktemp -d "${target}.stage.XXXXXX")
@@ -105,9 +115,10 @@ else
 fi
 [ -f "$stage/repo/flake.lock" ] || die "Repository is missing its flake.lock."
 mkdir "$stage/local"
-if "$replace" && [ -f "$target/local/hardware-configuration.nix" ]; then
+if "$replace" && [ -d "$target/local" ]; then
   cp -a "$target/local/." "$stage/local/"
-else
+fi
+if [ ! -f "$stage/local/hardware-configuration.nix" ]; then
   nixos-generate-config --show-hardware-config > "$stage/local/hardware-configuration.nix"
 fi
 state_version=$(nixos-version | cut -d . -f 1,2)
@@ -117,18 +128,10 @@ if [ -f /etc/nixos/configuration.nix ]; then
 fi
 [[ "$state_version" =~ ^[0-9]{2}\.[0-9]{2}$ ]] || die "Cannot detect system.stateVersion; use manual deployment."
 if [ ! -f "$stage/local/settings.nix" ]; then
-  python3 - "$stage/local/settings.nix" "$username" "$uid" "$home_dir" "$hostname" "$state_version" "$ssh_enable" "$ssh_key" <<'PY'
-import json, pathlib, sys
-out, user, uid, home, host, version, ssh, keyfile = sys.argv[1:]
-keys = pathlib.Path(keyfile).read_text().strip().splitlines() if keyfile else []
-quote = json.dumps
-text = '{ ... }: {\n  bspwmBuild = {\n'
-text += f'    username = {quote(user)}; uid = {int(uid)}; homeDirectory = {quote(home)};\n'
-text += f'    hostName = {quote(host)}; stateVersion = {quote(version)};\n'
-text += f'    ssh = {{ enable = {ssh}; authorizedKeys = [ ' + ' '.join(quote(k) for k in keys) + ' ]; };\n'
-text += '  };\n}\n'
-pathlib.Path(out).write_text(text)
-PY
+  python3 "$script_dir/render-settings.py" \
+    --output "$stage/local/settings.nix" --user "$username" --uid "$uid" \
+    --home "$home_dir" --hostname "$hostname" --state-version "$state_version" \
+    --ssh "$ssh_enable" --ssh-key "$ssh_key" "${settings_options[@]}"
 fi
 [ -f "$stage/local/private.nix" ] || printf '{ ... }: {}\n' > "$stage/local/private.nix"
 cat > "$stage/flake.nix" <<FLAKE
