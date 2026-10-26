@@ -125,6 +125,7 @@ cat > /mnt/etc/nixos/configuration.nix <<'EOF'
   boot.loader.efi.canTouchEfiVariables = true;
   networking.hostName = "nixos-pc";
   networking.networkmanager.enable = true;
+  hardware.enableRedistributableFirmware = true;
   time.timeZone = "Asia/Yekaterinburg";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
@@ -140,6 +141,9 @@ cat > /mnt/etc/nixos/configuration.nix <<'EOF'
 EOF
 nixos-install
 ```
+
+Firmware включено уже в базовой системе, чтобы Wi-Fi и другие устройства
+сохранили поддержку после первой перезагрузки.
 
 В конце `nixos-install` задайте пароль root. Затем обязательно назначьте пароль
 обычному пользователю:
