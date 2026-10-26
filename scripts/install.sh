@@ -2,6 +2,7 @@
 # Install this desktop on an existing NixOS system; never partition or format disks.
 set -euo pipefail
 umask 022
+export LC_ALL=C LANGUAGE=C
 repo_url=''
 ref=main
 profile=''
