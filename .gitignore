@@ -13,6 +13,7 @@ __pycache__/
 hardware-configuration.nix
 /local.nix
 /private.nix
+/configuration.nix
 *.key
 *.pem
 .env

@@ -1,85 +1,71 @@
-# Установка и откат
+# Установка, миграция и откат
 
-Для установки ОС с нуля на другой ПК используйте [пошаговую инструкцию для профиля universal](fresh-install.md).
+Нужна установленная NixOS 26.05 x86_64/UEFI с обычным пользователем и паролем. Для пустого диска см. [установку с нуля](fresh-install.md). Выполняйте команды **на целевом ПК**.
 
-## Диалоговый мастер
-
-После клонирования выполните `./install.sh`: откроются диалоги выбора профиля, пользователя, программ, VPN, xrdp и SSH. Зависимости загружаются во временное окружение Nix. По умолчанию предлагается сборка без переключения системы. Все изменения подтверждаются на итоговом экране.
-
-Мастер использует английский язык (`LC_ALL=C`, включая кнопки и сообщения команд) и ASCII-рамки без теней, чтобы корректно отображаться в установочной консоли. Это не меняет язык установленного рабочего стола.
-
-Мастер сохраняет параметры выбранных компонентов в `local/settings.nix`. При замене существующего развёртывания сохраняются прежние `local/`; их значения меняются вручную. Журнал установки находится в `/var/log/nixos-bspwm/`.
-
-## Установка через параметры
-
-1. Установите NixOS на новый ПК штатным установщиком, выберите UEFI и создайте обычного пользователя с паролем.
-2. Скачайте репозиторий и запустите `scripts/install.sh` с нужным профилем и именем этого пользователя.
-3. Сначала используйте `--mode build`; проверьте `local/hardware-configuration.nix` и `local/settings.nix`.
-4. Выполните `sudo nixos-rebuild switch --flake path:/etc/nixos#current` и перезагрузитесь для нового экрана входа.
-
-При запуске из `nix-shell -p git python3` передавайте его PATH через `sudo env PATH="$PATH"`.
-Для автоматической установки профиль надо указать явно. Без терминала выбирается `universal`.
-Установщик не содержит операции с разделами и не назначает пароли.
-
-## Ручная установка / BIOS / особые драйверы
-
-Скопируйте репозиторий в `/etc/nixos/bspwm-repo` и создайте `/etc/nixos/local`.
-Получите аппаратный конфиг **нового компьютера**, не исходного ноутбука:
+Скачайте новую копию репозитория, затем запустите английский мастер:
 
 ```sh
-sudo nixos-generate-config --show-hardware-config \
-  | sudo tee /etc/nixos/local/hardware-configuration.nix >/dev/null
-sudo cp /etc/nixos/bspwm-repo/examples/settings.nix /etc/nixos/local/settings.nix
-sudo cp /etc/nixos/bspwm-repo/examples/private.nix /etc/nixos/local/private.nix
+nix-shell -p git --run 'git clone https://github.com/CriketSuper/nixos-bspwm.git nixos-bspwm-classic'
+cd nixos-bspwm-classic
+./install.sh
 ```
 
-Отредактируйте имя, UID (`id -u`), домашнюю папку и исходный `stateVersion` установленной системы.
-Локальный `/etc/nixos/flake.nix`:
+Выберите `universal` для другого Intel/AMD ПК или `huawei-matebook-d16` для AMD BOM-WXX9. Мастер спросит пользователя, hostname, часовой пояс, первоначальный `stateVersion`, группы программ, RDP и SSH. Для входа по паролю выберите **password**. Пароли мастер не спрашивает, ключи автоматически не переносит.
+
+**build** готовит `/etc/nixos` и собирает систему без активации; **prepare** только готовит файлы; **switch** ещё и активирует успешную сборку. Лог: `/var/log/nixos-bspwm/`.
+
+После успешного build:
+
+```sh
+sudo nixos-rebuild switch
+sudo reboot
+```
+
+## Переход с прежнего развёртывания
+
+Мастер предлагает заменить старую структуру. В командном режиме из **новой чистой Git-копии**:
+
+```sh
+sudo env PATH="$PATH" bash scripts/install.sh --replace \
+  --profile universal --user criket --ssh-mode password --mode build
+```
+
+Затем проверьте `/etc/nixos/configuration.nix`, `/etc/nixos/hardware-configuration.nix` и выполните обычный switch. Исходный `system.stateVersion` берётся из прежнего `local/settings.nix` или `configuration.nix` без вычисления старой конфигурации. Если автоматически определить его нельзя, нужен `--state-version YY.MM` с реальным первоначальным значением.
+
+Старый `/etc/nixos` перемещается целиком в `/var/backups/nixos-bspwm/<дата>/config-before/`, доступный только root. Он нужен для локального отката. **Ни `private.nix`, ни ключи, ни старый `local/settings.nix` не подключаются к новой системе.** Из старых файлов используются только аппаратный конфиг этого ПК и номер совместимости. Имя, UID и домашняя папка берутся у существующего пользователя. Пароль остаётся в локальной базе учётных записей; копирования паролей между ПК нет.
+
+Службы выбираются заново. SSH выключен по умолчанию, если не выбран `--ssh-mode password` или `key`. Если мигрируете по SSH, включите нужный способ входа до активации; в режиме key добавьте публичный ключ вручную в новый `configuration.nix`.
+
+Прежние изменения общих модулей, настройки дополнительных дисков, особого загрузчика и драйверов проверьте по локальной резервной копии перед switch. Дополнительные точки монтирования из аппаратного конфига сохраняются. Модули с секретами автоматически не импортируются. Рабочий стол до успешной активации остаётся прежним.
+
+## Ручная установка, BIOS и особые драйверы
+
+Для BIOS установщик не применяется. Сохраните собственные `configuration.nix` и `hardware-configuration.nix`, скопируйте общие файлы репозитория прямо в `/etc/nixos` и добавьте в imports:
 
 ```nix
-{
-  inputs.bspwm.url = "path:/etc/nixos/bspwm-repo";
-  outputs = { bspwm, ... }: {
-    nixosConfigurations.current = bspwm.lib.mkSystem {
-      profile = "universal";
-      modules = [ ./local/hardware-configuration.nix ./local/settings.nix ./local/private.nix ];
-    };
-  };
-}
+./modules
+./profiles/universal.nix
 ```
 
-Для BIOS сохраните прежний работавший загрузчик в `private.nix`, отключив заданный по умолчанию systemd-boot через `lib.mkForce false`. Укажите корректное устройство GRUB самостоятельно.
-Для NVIDIA добавьте соответствующие вашему GPU параметры драйвера в локальный модуль. Аппаратный сканер не выбирает проприетарный драйвер вместо вас.
-В случае шифрования/LVM/RAID убедитесь, что `hardware-configuration.nix` и локальный модуль включают настройки прежней загрузки.
-Сложные конфигурации с сетевыми томами, ZFS и дополнительными службами переносите вручную, сохраняя их прежние модули.
+Пример обычного главного файла: [examples/configuration.nix](../examples/configuration.nix). Для BIOS отключите systemd-boot и настройте GRUB на проверенное устройство. Для NVIDIA сохраните настройки драйверов вашего GPU. При LUKS/LVM/RAID/ZFS сохраните все необходимые параметры загрузки и файловых систем. Проверяйте их до перезагрузки.
 
-```sh
-sudo nix --extra-experimental-features 'nix-command flakes' flake lock path:/etc/nixos
-sudo env NIX_CONFIG='experimental-features = nix-command flakes' nixos-rebuild build --flake path:/etc/nixos#current
-# После проверки:
-sudo env NIX_CONFIG='experimental-features = nix-command flakes' nixos-rebuild switch --flake path:/etc/nixos#current
-```
-
-## Локальные настройки
-
-`local/settings.nix`: пользователь, hostname, UID, timezone, stateVersion, включение SSH, группы программ.
-`local/private.nix`: дополнительные службы, гостевой SSH-пользователь, ссылки на необязательные RPM.
-Секреты VPN храните в пользовательских данных клиента, WireGuard-ключ — отдельным файлом с правами root. Не вставляйте секретные значения в Nix-код: вычисленные конфиги/пакеты попадают в Nix store.
-Домашние данные не восстанавливаются из этой конфигурации. Obsidian vault, Seafile, браузерные/почтовые данные переносите отдельно.
-Параметры экранов сохраняются через Super+Ctrl+P на каждом ПК; EDID-профили старого ноутбука не публикуются.
-
-Для существующего локального развёртывания `install.sh --replace` обновляет копию репозитория, сохраняя `local/`. Новые `--user`/`--ssh-key` в этом режиме не переписывают уже существующий `settings.nix`: отредактируйте его вручную.
+Home Manager подключается общим модулем. Дальше работают `sudo nixos-rebuild build` и `sudo nixos-rebuild switch`. Экспериментальные возможности Nix не требуются.
 
 ## Откат
 
-Без перезагрузки:
+Откат активной системы:
 
 ```sh
 sudo nixos-rebuild switch --rollback
 ```
 
-Если система не загружается, выберите предыдущее поколение в меню systemd-boot. Хранятся два поколения.
-Установщик сохраняет текущую конфигурацию в `/var/backups/nixos-bspwm/<дата>/config-before.tar.gz` и путь старой системы в `system-path.txt`.
-Из терминала можно вручную вызвать `<путь-из-system-path.txt>/bin/switch-to-configuration switch` с sudo.
-Это возвращает активную систему. Для дальнейших сборок восстановите старые конфиги из архива; текущую папку `/etc/nixos` сначала переименуйте или отдельно сохраните.
-После переноса проверьте звук, Wi-Fi/Ethernet, блокировку, GPU и внешние экраны.
+Он не возвращает исходники. Если нужно также восстановить конфиги, определите нужный каталог резервной копии и сохраните новый конфиг перед возвратом:
+
+```sh
+sudo ls /var/backups/nixos-bspwm/
+# Replace DATE-PID with the actual backup directory name:
+sudo mv /etc/nixos /etc/nixos-after-migration
+sudo cp -a /var/backups/nixos-bspwm/DATE-PID/config-before /etc/nixos
+```
+
+Если новый конфиг ещё не активировался, switch --rollback не нужен: текущая система уже прежняя. Если система не загружается, выберите предыдущее поколение в systemd-boot. Путь прежней системы сохранён в `system-path.txt`, а GC-root защищает её от очистки.

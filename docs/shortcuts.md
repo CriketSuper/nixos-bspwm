@@ -95,8 +95,8 @@
 | Ctrl + Shift + R | Перезапустить BSPWM |
 | Ctrl + Shift + Q | Завершить BSPWM и выйти из сеанса |
 
-Конфигурация сочетаний: `/etc/nixos/bspwm-repo/dotfiles/sxhkd/sxhkdrc`.
-Этот файл создаётся через Home Manager из `/etc/nixos/bspwm-repo/docs/shortcuts.md`.
+Конфигурация сочетаний: `/etc/nixos/dotfiles/sxhkd/sxhkdrc`.
+Этот файл создаётся через Home Manager из `/etc/nixos/docs/shortcuts.md`.
 
 ## Физические мониторы
 

@@ -9,6 +9,5 @@ let cfg = config.bspwmBuild; in {
       ++ lib.optionals cfg.virtualisation.enable [ "docker" "libvirt" ]
       ++ lib.optional cfg.development.enable "wireshark";
     packages = [ pkgs.tree ];
-    openssh.authorizedKeys.keys = cfg.ssh.authorizedKeys;
   };
 }

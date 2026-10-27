@@ -1,7 +1,7 @@
 { config, lib, ... }:
 
 {
-  # Home Manager is provided by the locked flake input.
+  # Home Manager is imported as a regular NixOS module in modules/default.nix.
 
   home-manager = {
     useGlobalPkgs = true;

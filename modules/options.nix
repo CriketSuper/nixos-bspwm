@@ -7,19 +7,10 @@ in {
     username = mkOption { type = types.str; default = "criket"; };
     uid = mkOption { type = types.int; default = 1000; };
     homeDirectory = mkOption { type = types.str; default = "/home/${cfg.username}"; };
-    stateVersion = mkOption { type = types.str; default = "26.05"; };
     homeStateVersion = mkOption { type = types.str; default = "25.05"; };
-    timeZone = mkOption { type = types.str; default = "Asia/Yekaterinburg"; };
-    hostName = mkOption { type = types.str; default = "nixos-bspwm"; };
     development.enable = mkOption { type = types.bool; default = true; };
     virtualisation.enable = mkOption { type = types.bool; default = true; };
     vpn.enable = mkOption { type = types.bool; default = true; };
-    ssh = {
-      enable = mkOption { type = types.bool; default = false; };
-      port = mkOption { type = types.port; default = 5555; };
-      passwordAuthentication = mkOption { type = types.bool; default = false; };
-      authorizedKeys = mkOption { type = types.listOf types.str; default = []; };
-    };
     vendor = {
       chatgptSource = mkOption { type = types.nullOr types.path; default = null; };
       libreofficeSource = mkOption { type = types.nullOr types.path; default = null; };

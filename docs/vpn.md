@@ -20,7 +20,7 @@ sudo systemctl stop hiddify-gui
 sudo systemctl start v2raya
 ```
 
-Основной модуль: `/etc/nixos/bspwm-repo/services/vpn.nix`.
+Основной модуль: `/etc/nixos/services/vpn.nix`.
 Hiddify закреплён по версии и SHA-256; v2rayA/Xray/Amnezia — по Nixpkgs lock-файлу.
 TLS fingerprint: [инструкция](vpn-fingerprints.md).
 Доступность конкретной подписки проверяется отдельно на новом ПК.

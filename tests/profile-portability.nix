@@ -1,16 +1,9 @@
 # Evaluation checks for actual hardware/user differences, not a deployable system.
-{ repo }:
+{ nixpkgs ? <nixpkgs> }:
 let
-  hardware = {
-    fileSystems."/" = { device = "/dev/disk/by-label/test-only"; fsType = "ext4"; };
-    fileSystems."/boot" = { device = "/dev/disk/by-label/efi-test-only"; fsType = "vfat"; };
-  };
-  universal = (repo.lib.mkSystem {
-    modules = [ hardware {
-      bspwmBuild = { username = "portableuser"; uid = 1007; homeDirectory = "/home/portableuser"; };
-    } ];
-  }).config;
-  huawei = (repo.lib.mkSystem { profile = "huawei-matebook-d16"; modules = [ hardware ]; }).config;
+  systems = import ./systems.nix { inherit nixpkgs; };
+  universal = systems.universal.config;
+  huawei = systems.huawei-matebook-d16.config;
 in
 assert universal.users.users.portableuser.uid == 1007;
 assert universal.home-manager.users.portableuser.home.homeDirectory == "/home/portableuser";

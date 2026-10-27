@@ -5,7 +5,6 @@
   boot.kernelParams = [ "amd_pstate=active" ];
   hardware.firmware = [ pkgs.sof-firmware ];
   bspwmBuild = {
-    hostName = "nixoscriket";
     ui = { battery = "BAT1"; adapter = "ACAD"; backlight = "amdgpu_bl1"; };
   };
   environment.systemPackages = with pkgs; [ xf86-video-amdgpu radeontop microcode-amd ];

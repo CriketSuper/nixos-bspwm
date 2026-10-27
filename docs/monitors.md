@@ -76,5 +76,5 @@ python3 ~/.config/scripts/sync-monitors.py
 ```
 
 Ручное применение произвольного скрипта ARandR также стоит завершить вызовом `python3 ~/.config/scripts/sync-monitors.py`.
-Исходники: `/etc/nixos/bspwm-repo/services/displays.nix`, `/etc/nixos/bspwm-repo/dotfiles/scripts/sync-monitors.py`.
+Исходники: `/etc/nixos/services/displays.nix`, `/etc/nixos/dotfiles/scripts/sync-monitors.py`.
 Профили: `~/.config/autorandr/`. Графические профили ARandR в `~/.screenlayout/` сами по себе не становятся автопрофилями: их нужно применить и сохранить через меню мониторов.

@@ -1,9 +1,12 @@
-{ src, stdenv, lib, rpmextract, autoPatchelfHook, makeWrapper, zlib, gtk3, glib, gdk-pixbuf, pango, cairo, atk, at-spi2-atk, wayland, libayatana-appindicator, libX11, libxcb, libXext, libXrender, libXft, fontconfig, freetype }:
+{ fetchurl, src ? null, stdenv, lib, rpmextract, autoPatchelfHook, makeWrapper, zlib, gtk3, glib, gdk-pixbuf, pango, cairo, atk, at-spi2-atk, wayland, libayatana-appindicator, libX11, libxcb, libXext, libXrender, libXft, fontconfig, freetype }:
 
 stdenv.mkDerivation {
   pname = "tg-ws-proxy";
   version = "1.10.4";
-  inherit src;
+  src = if src != null then src else fetchurl {
+    url = "https://github.com/Flowseal/tg-ws-proxy/releases/download/v1.10.4/TgWsProxy_linux_amd64.rpm";
+    sha256 = "5278f09ec87e8784084316b803f8d586278aee2614a77f7ba0dc9a7208279764";
+  };
 
   dontUnpack = true;
   nativeBuildInputs = [ rpmextract autoPatchelfHook makeWrapper ];

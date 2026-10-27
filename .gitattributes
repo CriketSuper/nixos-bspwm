@@ -9,3 +9,6 @@
 *rc text eol=lf
 
 *.ini whitespace=-blank-at-eol
+
+# Preserve the upstream icon bytes and its documented SHA-256.
+/packages/assets/obsidian-logo-gradient.svg -text whitespace=cr-at-eol

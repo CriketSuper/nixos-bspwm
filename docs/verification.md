@@ -1,33 +1,18 @@
-# Проверка конфигурации
+# Проверки
 
-## Сборка профилей
-
-```sh
-nix --extra-experimental-features 'nix-command flakes' flake check
-```
-
-Проверка собирает оба профиля: `universal` и `huawei-matebook-d16`.
-Их тестовые файловые системы предназначены для проверки сборки. Для установки используются разделы и оборудование целевого ПК, полученные через `nixos-generate-config`.
-
-## Переносимость параметров
+Все команды запускаются из корня репозитория. Используется обычный Nixpkgs из канала NixOS 26.05.
 
 ```sh
-nix --extra-experimental-features 'nix-command flakes' eval --impure --json \
-  --expr 'import ./tests/profile-portability.nix { repo = builtins.getFlake (toString ./.); }'
-```
-
-Проверяются пользователь и UID, пути Home Manager и Hiddify, права доступа к RDP, разделение аппаратных настроек Huawei и универсального профиля.
-
-## Установщик и скрипты
-
-```sh
-shellcheck install.sh scripts/install.sh scripts/install-wizard.sh scripts/update.sh
+shellcheck install.sh scripts/*.sh
 python3 -m unittest discover -s tests -p 'test_*.py'
+nix-instantiate --eval --strict --json --expr 'import ./tests/profile-portability.nix {}'
+nix-instantiate --eval --strict --json --expr 'import ./tests/native-options.nix {}'
+nix-build tests/systems.nix -A universal.system --no-out-link
+nix-build tests/systems.nix -A huawei-matebook-d16.system --no-out-link
 ```
 
-Проверки генератора настроек охватывают выбор компонентов, значения портов, обработку некорректных параметров и экранирование строк Nix.
+Тестовые файловые системы используются только для сборки. Не устанавливайте полученные системы на реальное оборудование: настоящий аппаратный конфиг генерируется на целевом ПК.
 
-## Оборудование
+Проверки охватывают разделение аппаратных профилей, произвольный UID/Home Manager, права xrdp, стандартные переопределения SSH, сохранение версии совместимости, отсутствие переноса приватных файлов и генерацию обычного configuration.nix. Проверка миграции работает в отдельном временном каталоге, не меняя `/etc/nixos`.
 
-Huawei-профиль рассчитан на MateBook D16 AMD BOM-WXX9. Универсальный профиль поддерживает x86_64 Intel/AMD; дополнительные драйверы задаются локальным модулем.
-После установки проверьте звук, Wi-Fi/Ethernet, блокировку, GPU и внешние экраны на целевом ПК.
+После установки на реальном ПК проверьте звук, сеть, GPU, блокировку, мониторы и выбранный способ входа по SSH. Сборка не заменяет проверку оборудования.

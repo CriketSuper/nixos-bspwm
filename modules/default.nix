@@ -1,6 +1,7 @@
 { config, lib, pkgs, ... }:
 let cfg = config.bspwmBuild; in {
   imports = [
+    ((import ../sources.nix).home-manager + "/nixos")
     ./options.nix
     ../users.nix
     ../packages/desktop.nix ../packages/extra-apps.nix
@@ -12,11 +13,10 @@ let cfg = config.bspwmBuild; in {
   ];
   services.bspwmRdp = { enable = lib.mkDefault true; allowedUsers = [ cfg.username ]; };
   nixpkgs.config.allowUnfree = true;
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   hardware.enableRedistributableFirmware = true;
   boot.loader.systemd-boot = { enable = lib.mkDefault true; configurationLimit = 2; };
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
-  time.timeZone = cfg.timeZone;
+  time.timeZone = lib.mkDefault "Asia/Yekaterinburg";
   i18n.defaultLocale = "ru_RU.UTF-8";
   i18n.extraLocaleSettings = lib.genAttrs [
     "LC_ADDRESS" "LC_IDENTIFICATION" "LC_MEASUREMENT" "LC_MONETARY" "LC_NAME"
@@ -33,5 +33,5 @@ let cfg = config.bspwmBuild; in {
     libraries = with pkgs; [ stdenv.cc.cc.lib gcc.cc.lib glibc zlib ];
   };
   virtualisation.docker.enable = cfg.virtualisation.enable;
-  system.stateVersion = cfg.stateVersion;
+  system.stateVersion = lib.mkDefault "26.05";
 }

@@ -1,21 +1,12 @@
-# Дополнительный ChatGPT desktop
+# ChatGPT desktop
 
-Codex CLI установлен из Nixpkgs. ChatGPT desktop из официального RPM включается отдельно.
-RPM не публикуется в репозитории. Скопируйте официальный установочный файл на новый ПК, в `/etc/nixos/local/vendor/`, и укажите в `/etc/nixos/local/private.nix`:
+ChatGPT desktop 26.1021.22027 устанавливается автоматически из официального RPM-репозитория OpenAI с проверкой SHA-256. Перенос файла с ноутбука не нужен. Код упаковки: `packages/chatgpt-desktop.nix`.
 
-```nix
-{ ... }: {
-  bspwmBuild.vendor.chatgptSource = ./vendor/ChatGPT-26.1002.52244-x86_64.rpm;
-}
-```
-
-Сборка и применение:
+Обновление и локальные переопределения описаны в [RPM-приложениях](rpm-packages.md). Применение обычное:
 
 ```sh
-sudo nixos-rebuild build --flake path:/etc/nixos#current
-sudo nixos-rebuild switch --flake path:/etc/nixos#current
+sudo nixos-rebuild build
+sudo nixos-rebuild switch
 ```
 
-Упаковка находится в `packages/chatgpt-desktop.nix`, рассчитана на протестированный RPM 26.1002.52244 для x86_64.
-При обновлении получите новый официальный RPM, сохраните старый файл, обновите путь `chatgptSource` и версию рецепта, сначала выполните build. Новая версия может требовать изменения упаковки/зависимостей.
-Обработчики обычных файлов и web-ссылок остаются у Thunar, Firefox и офисных приложений; ChatGPT сохраняет только codex deep link.
+Аккаунт и история приложения не копируются. Войдите в приложение на новом ПК отдельно. NixOS не входит в официальный список поддерживаемых дистрибутивов Linux preview, упаковка для него предоставлена этим проектом.

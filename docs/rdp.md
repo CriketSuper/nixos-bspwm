@@ -25,14 +25,10 @@ Hiddify запускается на локальном X11-дисплее :0; у
 ## Параметры на других ПК
 
 Модуль: `services/rdp.nix`. Разрешён пользователь, выбранный установщиком.
-В `/etc/nixos/local/private.nix` можно отключить RDP или изменить порт:
+В `/etc/nixos/configuration.nix` измените существующий блок, чтобы отключить RDP или сменить порт:
 
 ```nix
-{ ... }: {
-  services.bspwmRdp.enable = false;
-  # services.bspwmRdp.port = 3390;
-  # services.bspwmRdp.openFirewall = false;
-}
+services.bspwmRdp = { enable = false; port = 3389; };
 ```
 
 Для дополнительных существующих обычных пользователей добавьте их имена в `services.bspwmRdp.allowedUsers`.
@@ -55,5 +51,5 @@ sudo ss -ltnp | grep 3389
 journalctl -u xrdp -u xrdp-sesman -b
 ```
 
-Развёртывание из Git: `sudo nixos-rebuild switch --flake path:/etc/nixos#current`.
+Развёртывание из Git: `sudo nixos-rebuild switch`.
 Сведения о сеансах systemd: [документация xrdp](https://github.com/neutrinolabs/xrdp/wiki/Tips-and-FAQ#why-cant-i-log-the-same-user-on-on-the-graphical-console-and-over-xrdp-at-the-same-time).

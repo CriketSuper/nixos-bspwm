@@ -26,15 +26,18 @@ class InstallerSettingsTests(unittest.TestCase):
     def render(self, choices=None, key=""):
         output = self.root / "settings.nix"
         args = argparse.Namespace(output=output, user="alice", uid=1007, home="/home/alice",
-                                  hostname="work-pc", state_version="25.05", ssh="false", ssh_key=key)
+                                  hostname="work-pc", state_version="25.05", ssh_mode="off", ssh_key=key, profile="universal")
         SETTINGS.render(args, SETTINGS.read_options(None) if choices is None else choices)
         return output.read_text(encoding="utf-8")
 
     def test_original_state_and_user_are_preserved(self):
         text = self.render()
         self.assertIn('username = "alice"; uid = 1007;', text)
-        self.assertIn('stateVersion = "25.05";', text)
-        self.assertIn('enable = false; port = 5555; authorizedKeys = [', text)
+        self.assertIn('system.stateVersion = "25.05";', text)
+        self.assertIn("enable = false;", text)
+        self.assertIn("ports = [ 5555 ];", text)
+        self.assertNotIn("authorizedKeys", text)
+        self.assertIn("./profiles/universal.nix", text)
 
     def test_selected_components_and_ports_reach_the_local_module(self):
         choices = self.options({"development": False, "virtualisation": False, "vpn": False,
@@ -44,9 +47,9 @@ class InstallerSettingsTests(unittest.TestCase):
         for name in ("development", "virtualisation", "vpn"):
             self.assertIn(f"{name}.enable = false;", text)
         self.assertIn('services.bspwmRdp = { enable = false; port = 3391; };', text)
-        self.assertIn('timeZone = "Etc/UTC";', text)
+        self.assertIn('time.timeZone = "Etc/UTC";', text)
         self.assertIn('stateVersion = "26.05";', text)
-        self.assertIn('port = 2222;', text)
+        self.assertIn('ports = [ 2222 ];', text)
 
     def test_port_boundaries_and_types(self):
         for value in (0, 65536, True, "3389", -1):

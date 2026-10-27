@@ -1,10 +1,14 @@
-{ pkgs, src }:
+{ pkgs, src ? null }:
 
 let
+  archive = if src != null then src else pkgs.fetchurl {
+    url = "https://downloadarchive.documentfoundation.org/libreoffice/old/26.8.0.3/rpm/x86_64/LibreOffice_26.8.0.3_Linux_x86-64_rpm.tar.gz";
+    sha256 = "24f08911b8c938a3318bd699e71bef034a5b4708499646d2d367e3c922d95137";
+  };
   raw = pkgs.stdenvNoCC.mkDerivation {
     pname = "libreoffice-rpm-files";
     version = "26.8.0.3";
-    inherit src;
+    src = archive;
     nativeBuildInputs = [ pkgs.rpmextract ];
     unpackPhase = ''tar -xf "$src"'';
     installPhase = ''

@@ -107,40 +107,17 @@ Swap 16 GiB здесь используется для обычной работ
 
 ## 4. Установить базовую NixOS
 
-Сгенерируйте аппаратный конфиг **на целевом ПК**:
+Базовый конфиг можно получить автоматически, без ручного набора. После монтирования новых разделов в `/mnt` и `/mnt/boot`:
 
 ```sh
-nixos-generate-config --root /mnt
-```
-
-Создайте минимальный `configuration.nix`. В примере пользователь — `criket`,
-имя компьютера — `nixos-pc`; при желании замените их **во всех последующих командах**.
-Этот файл относится к новой установке, не копируйте его поверх рабочей системы.
-
-```sh
-cat > /mnt/etc/nixos/configuration.nix <<'EOF'
-{ pkgs, ... }: {
-  imports = [ ./hardware-configuration.nix ];
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  networking.hostName = "nixos-pc";
-  networking.networkmanager.enable = true;
-  hardware.enableRedistributableFirmware = true;
-  time.timeZone = "Asia/Yekaterinburg";
-  i18n.defaultLocale = "en_US.UTF-8";
-  console.keyMap = "us";
-  users.users.criket = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
-  };
-  environment.systemPackages = with pkgs; [ git python3 dialog nano ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nixpkgs.config.allowUnfree = true;
-  system.stateVersion = "26.05";
-}
-EOF
+cd /tmp
+nix-shell -p git --run 'git clone https://github.com/CriketSuper/nixos-bspwm.git nixos-bspwm-base'
+cd nixos-bspwm-base
+bash scripts/prepare-base.sh /mnt criket
 nixos-install
 ```
+
+Скрипт генерирует аппаратный конфиг этого ПК и минимальный `configuration.nix` с пользователем `criket`. Разметку дисков он не выполняет. Имя пользователя можно заменить последним аргументом; далее используйте его во всех командах. Если скрипт сообщает об ошибке, сначала устраните её, затем продолжайте.
 
 Firmware включено уже в базовой системе, чтобы Wi-Fi и другие устройства
 сохранили поддержку после первой перезагрузки.
@@ -186,7 +163,7 @@ cd nixos-bspwm
 
 Development, Docker/QEMU, VPN и xrdp выбираются отдельно; обычные приложения и
 основной рабочий стол устанавливаются всегда. SSH включайте, если он нужен;
-мастер принимает публичный `.pub`-ключ. Закрытый ключ ему передавать не нужно.
+в отдельном окне выберите **password** для входа по существующему паролю или **off**, чтобы выключить SSH. Ключи и секреты автоматически не переносятся.
 
 Дождитесь **Build complete**. Если сборка завершилась ошибкой, не выполняйте switch;
 журнал находится в `/var/log/nixos-bspwm/`.
@@ -194,12 +171,12 @@ Development, Docker/QEMU, VPN и xrdp выбираются отдельно; о�
 Проверьте созданные настройки:
 
 ```sh
-sudo cat /etc/nixos/local/settings.nix
-sudo cat /etc/nixos/local/hardware-configuration.nix
+sudo cat /etc/nixos/configuration.nix
+sudo cat /etc/nixos/hardware-configuration.nix
 ```
 
 Если нужны особые драйверы NVIDIA, нестандартный загрузчик или дополнительные
-системные службы, внесите их в `/etc/nixos/local/private.nix` и повторите сборку.
+системные службы, внесите их в `/etc/nixos/configuration.nix` и повторите сборку.
 Профиль `universal` сам не выбирает проприетарный драйвер NVIDIA; параметры зависят
 от модели GPU и наличия гибридной графики. Используйте
 [раздел NVIDIA в руководстве NixOS](https://nixos.org/manual/nixos/stable/#sec-x11-graphics-cards-nvidia).
@@ -207,8 +184,7 @@ sudo cat /etc/nixos/local/hardware-configuration.nix
 При успешной сборке примените систему:
 
 ```sh
-sudo env NIX_CONFIG='experimental-features = nix-command flakes' \
-  nixos-rebuild switch --flake path:/etc/nixos#current
+sudo nixos-rebuild switch
 sudo reboot
 ```
 
@@ -221,8 +197,7 @@ sudo reboot
 Проверьте звук, микрофон, Wi-Fi, Bluetooth, блокировку и внешний монитор.
 Настройте экраны через **Super+Ctrl+P**. Остальные сочетания перечислены в
 [горячих клавишах](shortcuts.md). Верните личные данные и импортируйте VPN-подписки.
-Необязательные сторонние RPM отсутствуют в Git; их настройка описана в
-[основной инструкции](installation.md).
+TG WS Proxy, ChatGPT desktop и LibreOffice 26.8 скачиваются автоматически с проверкой SHA-256: [источники пакетов](rpm-packages.md). Личные данные приложений не переносятся.
 
 При неполадках войдите в консоль через Ctrl+Alt+F2. Последний журнал мастера:
 
@@ -235,13 +210,12 @@ sudo ls -t /var/log/nixos-bspwm/
 Обновить копию репозитория и собрать систему:
 
 ```sh
-sudo bash /etc/nixos/bspwm-repo/scripts/update.sh
-sudo env NIX_CONFIG='experimental-features = nix-command flakes' \
-  nixos-rebuild switch --flake path:/etc/nixos#current
+sudo bash /etc/nixos/scripts/update.sh
+sudo nixos-rebuild switch
 ```
 
 Применяйте switch только после успешной сборки. Не повышайте `system.stateVersion`
-при обычном обновлении. Локальные параметры хранятся в `/etc/nixos/local/`.
+при обычном обновлении. Локальные параметры хранятся в `/etc/nixos/configuration.nix`.
 
 Откат активной системы:
 

@@ -1,9 +1,12 @@
-{ src, stdenv, lib, rpmextract, autoPatchelfHook, makeWrapper, glib, nss, nspr, dbus, at-spi2-atk, cups, cairo, gtk3, gdk-pixbuf, pango, libX11, libXcomposite, libXdamage, libXext, libXfixes, libXrandr, libgbm, expat, libxcb, libxkbcommon, systemd, alsa-lib, libglvnd, libusb1 }:
+{ fetchurl, src ? null, stdenv, lib, rpmextract, autoPatchelfHook, makeWrapper, glib, nss, nspr, dbus, at-spi2-atk, cups, cairo, gtk3, gdk-pixbuf, pango, libX11, libXcomposite, libXdamage, libXext, libXfixes, libXrandr, libgbm, expat, libxcb, libxkbcommon, systemd, alsa-lib, libglvnd, libusb1 }:
 
 stdenv.mkDerivation {
   pname = "chatgpt-desktop";
-  version = "26.1002.52244";
-  inherit src;
+  version = "26.1021.22027";
+  src = if src != null then src else fetchurl {
+    url = "https://persistent.oaistatic.com/codex-app-prod/linux/rpm/x86_64/chatgpt-26.1021.22027-1.x86_64.rpm";
+    sha256 = "d5069043701a12760cce0447f7688859e9988dfbb04daaa9be0be0b762ff895f";
+  };
 
   dontUnpack = true;
   nativeBuildInputs = [ rpmextract autoPatchelfHook makeWrapper ];
