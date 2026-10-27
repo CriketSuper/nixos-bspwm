@@ -184,7 +184,7 @@ sudo cat /etc/nixos/hardware-configuration.nix
 При успешной сборке примените систему:
 
 ```sh
-sudo nixos-rebuild switch
+sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
 sudo reboot
 ```
 

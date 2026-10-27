@@ -10,4 +10,4 @@ target=${1:-/etc/nixos}
 }
 git -C "$target" pull --ff-only
 nixos-rebuild build -I "nixos-config=$target/configuration.nix"
-printf 'Build succeeded. Apply with: sudo nixos-rebuild switch\n'
+printf 'Build succeeded. Apply with: sudo nixos-rebuild switch -I nixos-config=%s/configuration.nix\n' "$target"

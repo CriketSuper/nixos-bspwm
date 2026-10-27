@@ -146,7 +146,7 @@ mode=$(ui --stdout --title 'Review and install' --default-item build --menu "$su
   switch 'Build and activate the configuration' \
   prepare 'Prepare configuration files only') || cancel
 if [ "$ssh_mode" = key ] && [ "$mode" = switch ]; then
-  info 'Public key needed' 'The system will be built without activating. Add your public key in configuration.nix, then run sudo nixos-rebuild switch.'
+  info 'Public key needed' 'The system will be built without activating. Add your public key in configuration.nix, then run sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix.'
   mode=build
 fi
 log_dir=/var/log/nixos-bspwm
@@ -162,8 +162,8 @@ if [ "${pipeline_status[0]}" -ne 0 ] || [ "${pipeline_status[1]}" -ne 0 ] || [ "
 fi
 case "$mode" in
   switch) info 'Done' "Configuration activated. Reboot when convenient.\nLog: $log_file" ;;
-  build) info 'Build complete' "Built without activating. Apply with:\nsudo nixos-rebuild switch\nLog: $log_file" ;;
-  prepare) info 'Files ready' "Configuration files prepared. Build with:\nsudo nixos-rebuild build\nLog: $log_file" ;;
+  build) info 'Build complete' "Built without activating. Apply with:\nsudo nixos-rebuild switch -I nixos-config=$target/configuration.nix\nLog: $log_file" ;;
+  prepare) info 'Files ready' "Configuration files prepared. Build with:\nsudo nixos-rebuild build -I nixos-config=$target/configuration.nix\nLog: $log_file" ;;
 esac
 clear
 printf 'Done. Log: %s\n' "$log_file"

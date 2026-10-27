@@ -148,6 +148,6 @@ case "$mode" in
     if [ "$mode" = switch ]; then
       nixos-rebuild switch -I "nixos-config=$target/configuration.nix"
       printf 'Activated. Reboot when convenient.\n'
-    else printf 'Build succeeded. Apply: sudo nixos-rebuild switch\n'
+    else printf 'Build succeeded. Apply from this session: sudo nixos-rebuild switch -I nixos-config=%s/configuration.nix\n' "$target"
     fi ;;
 esac

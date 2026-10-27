@@ -30,7 +30,7 @@ cd nixos-bspwm-classic
 Действие **build** сначала собирает систему без активации. После успешной сборки:
 
 ```sh
-sudo nixos-rebuild switch
+sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
 sudo reboot
 ```
 
@@ -52,10 +52,12 @@ sudo env PATH="$PATH" bash scripts/install.sh \
 ```sh
 sudo env PATH="$PATH" bash scripts/install.sh --replace \
   --profile universal --user criket --ssh-mode password --mode build
-sudo nixos-rebuild switch
+sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
 ```
 
 Установщик возьмёт аппаратный конфиг этого ПК и исходный `system.stateVersion`. Старые `flake.nix`, вложенный `bspwm-repo`, `local/`, ключи и `private.nix` останутся **только в локальной резервной копии** `/var/backups/nixos-bspwm/<дата>/config-before/`. В новую конфигурацию они не импортируются и на GitHub не отправляются. Выбор служб делается заново. Данные домашней папки не копируются.
+
+Для первого switch из старой системы путь указан явно: прежний `NIX_PATH` может не содержать `nixos-config`. После успешного переключения перезагрузитесь или заново войдите в сеанс. Дальше применяется обычный `sudo nixos-rebuild switch`.
 
 Если первоначальный `stateVersion` записан сложным выражением, укажите его через `--state-version YY.MM`; установщик не заменяет его номером текущего выпуска. Нестандартный загрузчик, NVIDIA и дополнительные службы из старых модулей перенесите вручную до switch: [подробности и откат](docs/installation.md).
 

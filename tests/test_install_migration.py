@@ -96,3 +96,20 @@ class MigrationTests(unittest.TestCase):
         self.assertNotIn('switch', calls)
         self.assertNotIn('--flake', calls)
         self.assertTrue((self.target / 'configuration.nix').exists())
+
+    def test_first_activation_hint_resolves_config_in_an_old_search_path(self):
+        result = self.install('--replace', '--mode', 'build')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        mapping = f'nixos-config={self.target}/configuration.nix'
+        self.assertIn(f'sudo nixos-rebuild switch -I {mapping}', result.stdout)
+        # Reproduce an old environment with only nixpkgs in NIX_PATH.
+        env = dict(self.env, NIX_PATH=f'nixpkgs={self.work}')
+        env.pop('NIXOS_CONFIG', None)
+        missing = subprocess.run(['nix-instantiate', '--find-file', 'nixos-config'],
+                                 env=env, text=True, capture_output=True)
+        self.assertNotEqual(missing.returncode, 0)
+        self.assertIn("file 'nixos-config' was not found", missing.stderr)
+        resolved = subprocess.run(['nix-instantiate', '-I', mapping, '--find-file', 'nixos-config'],
+                                  env=env, text=True, capture_output=True)
+        self.assertEqual(resolved.returncode, 0, resolved.stderr)
+        self.assertEqual(resolved.stdout.strip(), str(self.target / 'configuration.nix'))

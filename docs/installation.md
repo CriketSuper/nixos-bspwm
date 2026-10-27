@@ -17,7 +17,7 @@ cd nixos-bspwm-classic
 После успешного build:
 
 ```sh
-sudo nixos-rebuild switch
+sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
 sudo reboot
 ```
 
@@ -30,13 +30,21 @@ sudo env PATH="$PATH" bash scripts/install.sh --replace \
   --profile universal --user criket --ssh-mode password --mode build
 ```
 
-Затем проверьте `/etc/nixos/configuration.nix`, `/etc/nixos/hardware-configuration.nix` и выполните обычный switch. Исходный `system.stateVersion` берётся из прежнего `local/settings.nix` или `configuration.nix` без вычисления старой конфигурации. Если автоматически определить его нельзя, нужен `--state-version YY.MM` с реальным первоначальным значением.
+Затем проверьте `/etc/nixos/configuration.nix`, `/etc/nixos/hardware-configuration.nix` и выполните первый switch с явным путём, как показано выше. Исходный `system.stateVersion` берётся из прежнего `local/settings.nix` или `configuration.nix` без вычисления старой конфигурации. Если автоматически определить его нельзя, нужен `--state-version YY.MM` с реальным первоначальным значением.
 
 Старый `/etc/nixos` перемещается целиком в `/var/backups/nixos-bspwm/<дата>/config-before/`, доступный только root. Он нужен для локального отката. **Ни `private.nix`, ни ключи, ни старый `local/settings.nix` не подключаются к новой системе.** Из старых файлов используются только аппаратный конфиг этого ПК и номер совместимости. Имя, UID и домашняя папка берутся у существующего пользователя. Пароль остаётся в локальной базе учётных записей; копирования паролей между ПК нет.
 
 Службы выбираются заново. SSH выключен по умолчанию, если не выбран `--ssh-mode password` или `key`. Если мигрируете по SSH, включите нужный способ входа до активации; в режиме key добавьте публичный ключ вручную в новый `configuration.nix`.
 
 Прежние изменения общих модулей, настройки дополнительных дисков, особого загрузчика и драйверов проверьте по локальной резервной копии перед switch. Дополнительные точки монтирования из аппаратного конфига сохраняются. Модули с секретами автоматически не импортируются. Рабочий стол до успешной активации остаётся прежним.
+
+Если при первом переключении появилось `file 'nixos-config' was not found in the Nix search path`, текущий сеанс сохранил поисковый путь старой системы. Выполните:
+
+```sh
+sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
+```
+
+После успешного переключения перезагрузитесь или заново войдите в сеанс. Новый сеанс получит обычный поисковый путь с `nixos-config`; дальше достаточно `sudo nixos-rebuild switch`. Для этой ошибки повторный запуск установщика не нужен.
 
 ## Ручная установка, BIOS и особые драйверы
 
