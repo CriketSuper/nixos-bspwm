@@ -58,7 +58,7 @@ class MigrationTests(unittest.TestCase):
 
     def install(self, *args):
         return subprocess.run(['bash', str(self.source / 'scripts/install.sh'), '--target', str(self.target),
-                               '--backup-root', str(self.work / 'backups'), '--profile', 'universal',
+                               '--backup-root', str(self.work / 'backups'), '--state-root', str(self.work / 'state'), '--profile', 'universal',
                                '--user', 'alice', '--hostname', 'other-pc', *args],
                               env=self.env, text=True, capture_output=True)
 
@@ -72,13 +72,13 @@ class MigrationTests(unittest.TestCase):
         self.assertNotIn('authorizedKeys', config)
         self.assertNotIn('private', config)
         self.assertEqual((self.target / 'hardware-configuration.nix').read_text(), self.hardware)
-        for name in ('local', 'private.nix', 'vendor', 'flake.nix', 'flake.lock', 'bspwm-repo'):
+        for name in ('local', 'private.nix', 'vendor', 'flake.nix', 'flake.lock', 'bspwm-repo', '.git', 'tests', 'scripts', 'install.sh', 'README.md', 'examples'):
             self.assertFalse((self.target / name).exists(), name)
         backup = next((self.work / 'backups').iterdir())
         self.assertEqual(backup.stat().st_mode & 0o777, 0o700)
         self.assertTrue((backup / 'config-before/local/private.nix').exists())
-        status = subprocess.check_output(['git', '-C', str(self.target), 'status', '--porcelain'], text=True)
-        self.assertEqual(status, '')
+        self.assertTrue((self.work / 'state/source/.git').is_dir())
+        self.assertTrue((self.work / 'state/deployment.json').is_file())
         self.assertFalse((self.work / 'rebuild.log').exists())
 
     def test_requires_explicit_replace_before_moving_old_files(self):
@@ -101,7 +101,10 @@ class MigrationTests(unittest.TestCase):
         result = self.install('--replace', '--mode', 'build')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         mapping = f'nixos-config={self.target}/configuration.nix'
-        self.assertIn(f'sudo nixos-rebuild switch -I {mapping}', result.stdout)
+        self.assertIn('source/scripts/activate.sh', result.stdout)
+        activated = subprocess.run(['bash', str(self.work / 'state/source/scripts/activate.sh'), str(self.work / 'state')], env=self.env, text=True, capture_output=True)
+        self.assertEqual(activated.returncode, 0, activated.stderr)
+        self.assertIn(f'switch -I {mapping} -I nixpkgs=', (self.work / 'rebuild.log').read_text())
         # Reproduce an old environment with only nixpkgs in NIX_PATH.
         env = dict(self.env, NIX_PATH=f'nixpkgs={self.work}')
         env.pop('NIXOS_CONFIG', None)
@@ -113,3 +116,28 @@ class MigrationTests(unittest.TestCase):
                                   env=env, text=True, capture_output=True)
         self.assertEqual(resolved.returncode, 0, resolved.stderr)
         self.assertEqual(resolved.stdout.strip(), str(self.target / 'configuration.nix'))
+
+    def test_upgrading_native_configuration_keeps_ssh_and_local_choices(self):
+        original = '{ pkgs, ... }: { imports = [\n    ./hardware-configuration.nix\n    ./modules\n    ./profiles/universal.nix\n ]; system.stateVersion = "25.05"; services.openssh.settings.PubkeyAuthentication = true; }\n'
+        (self.target / 'configuration.nix').write_text(original)
+        (self.target / 'flake.nix').unlink()
+        (self.target / 'hardware-configuration.nix').write_text(self.hardware)
+        result = self.install('--replace', '--mode', 'prepare')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual((self.target / 'configuration.nix').read_text(), original)
+        self.assertFalse((self.target / '.git').exists())
+
+    def test_runtime_manifest_ignores_local_settings_and_detects_shared_edits(self):
+        result = self.install('--replace', '--mode', 'prepare')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        config = self.target / 'configuration.nix'
+        config.write_text(config.read_text().replace('enable = false;', 'enable = true;', 1))
+        command = ['python3', str(self.work / 'state/source/scripts/deployment-state.py'),
+                   'check', '--target', str(self.target), '--state-root', str(self.work / 'state')]
+        clean = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(clean.returncode, 0, clean.stderr)
+        shared = self.target / 'packages/desktop.nix'
+        shared.write_text(shared.read_text() + '\n# a local package edit\n')
+        changed = subprocess.run(command, capture_output=True, text=True)
+        self.assertNotEqual(changed.returncode, 0)
+        self.assertIn('packages/desktop.nix', changed.stderr)

@@ -53,3 +53,9 @@ journalctl -u xrdp -u xrdp-sesman -b
 
 Развёртывание из Git: `sudo nixos-rebuild switch`.
 Сведения о сеансах systemd: [документация xrdp](https://github.com/neutrinolabs/xrdp/wiki/Tips-and-FAQ#why-cant-i-log-the-same-user-on-on-the-graphical-console-and-over-xrdp-at-the-same-time).
+
+## Раскладка и службы рабочего стола
+
+В сеансе включены EN/RU и Alt+Shift. xorgxrdp может заменить карту клавиатуры при переподключении: процесс `bspwm-keyboard-layout --watch` восстанавливает обе раскладки, сохраняя выбранный язык, пока карта правильная. Файл для разовой проверки: `~/.config/scripts/keyboard-layout.sh --once`.
+
+RDP-сеанс передаёт свой DISPLAY/XAUTHORITY пользовательским службам и запускает graphical-session.target. Поэтому работают история буфера, уведомления и агент Polkit. Для виртуального GPU используется Picom с XRender без VSync; физический сеанс сохраняет обычный GLX. При завершении RDP соответствующие процессы очищаются.

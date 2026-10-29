@@ -36,6 +36,9 @@
           (rofi.override { plugins = [ rofi-calc rofi-emoji ]; })
           feh
           xrandr
+          setxkbmap
+          gawk
+          util-linux
           xrdb
           xclip
           gnused
@@ -99,6 +102,10 @@
       };
 
       xdg.configFile = {
+        "scripts/keyboard-layout.sh" = {
+          source = ./dotfiles/scripts/keyboard-layout.sh;
+          executable = true;
+        };
         "bspwm/bspwmrc" = {
           source = ./dotfiles/bspwm/bspwmrc;
           executable = true;

@@ -13,7 +13,7 @@
 sudo nixos-rebuild switch
 ```
 
-Flakes и экспериментальные возможности Nix не требуются. Home Manager подключён обычным системным модулем и применяется этой же командой. Nixpkgs берётся из стандартного канала **NixOS 26.05**; версия Home Manager закреплена в `sources.nix`.
+Flakes и экспериментальные возможности Nix не требуются. Home Manager подключён обычным системным модулем и применяется этой же командой. При установке один раз выбирается источник **NixOS 26.05**, и система сохраняет точный путь к нему в Nix store. Обычная правка SSH не обновляет ядро и все пакеты. Версия Home Manager закреплена в `sources.nix`.
 
 ## Установка на готовую NixOS
 
@@ -30,7 +30,7 @@ cd nixos-bspwm-classic
 Действие **build** сначала собирает систему без активации. После успешной сборки:
 
 ```sh
-sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
+sudo bash /var/lib/nixos-bspwm/source/scripts/activate.sh
 sudo reboot
 ```
 
@@ -52,12 +52,12 @@ sudo env PATH="$PATH" bash scripts/install.sh \
 ```sh
 sudo env PATH="$PATH" bash scripts/install.sh --replace \
   --profile universal --user criket --ssh-mode password --mode build
-sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
+sudo bash /var/lib/nixos-bspwm/source/scripts/activate.sh
 ```
 
-Установщик возьмёт аппаратный конфиг этого ПК и исходный `system.stateVersion`. Старые `flake.nix`, вложенный `bspwm-repo`, `local/`, ключи и `private.nix` останутся **только в локальной резервной копии** `/var/backups/nixos-bspwm/<дата>/config-before/`. В новую конфигурацию они не импортируются и на GitHub не отправляются. Выбор служб делается заново. Данные домашней папки не копируются.
+Установщик сохранит существующую обычную конфигурацию и аппаратный конфиг. При переходе со старой flake-схемы он возьмёт аппаратный конфиг этого ПК и исходный `system.stateVersion`. Старые `flake.nix`, вложенный `bspwm-repo`, `local/`, ключи и `private.nix` останутся **только в локальной резервной копии** `/var/backups/nixos-bspwm/<дата>/config-before/`. В новую конфигурацию они не импортируются и на GitHub не отправляются. Выбор служб делается заново. Данные домашней папки не копируются.
 
-Для первого switch из старой системы путь указан явно: прежний `NIX_PATH` может не содержать `nixos-config`. После успешного переключения перезагрузитесь или заново войдите в сеанс. Дальше применяется обычный `sudo nixos-rebuild switch`.
+Первый switch выполняется через `activate.sh`: он явно передаёт конфиг и тот же источник пакетов, который использовался при build. Прежний `NIX_PATH` может не содержать `nixos-config` или указывать на другой канал. После успешного переключения перезагрузитесь или заново войдите в сеанс. Дальше применяется обычный `sudo nixos-rebuild switch`.
 
 Если первоначальный `stateVersion` записан сложным выражением, укажите его через `--state-version YY.MM`; установщик не заменяет его номером текущего выпуска. Нестандартный загрузчик, NVIDIA и дополнительные службы из старых модулей перенесите вручную до switch: [подробности и откат](docs/installation.md).
 
@@ -74,10 +74,10 @@ sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
 ├── home.nix                  # Home Manager и настройки рабочего стола
 ├── dotfiles/                 # BSPWM, клавиши, Polybar, Rofi, оформление
 ├── sources.nix               # Версия системного модуля Home Manager
-└── scripts/
+└── docs/                     # Справка, доступная также в ~/nix-docs
 ```
 
-`configuration.nix` и аппаратный конфиг исключены из Git. Чтобы выбрать второй профиль, замените **одну строку импорта** `./profiles/universal.nix` на `./profiles/huawei-matebook-d16.nix`. Для другого ПК аппаратный конфиг всегда должен быть его собственным.
+В `/etc/nixos` нет Git-копии, тестов, установщика, примеров и ссылок `result`. Они хранятся отдельно в `/var/lib/nixos-bspwm/source`; резервные копии — в `/var/backups/nixos-bspwm`. `configuration.nix` и аппаратный конфиг относятся только к этому ПК и не публикуются. Чтобы выбрать второй профиль, замените **одну строку импорта** `./profiles/universal.nix` на `./profiles/huawei-matebook-d16.nix`. Для другого ПК аппаратный конфиг всегда должен быть его собственным.
 
 SSH настраивается обычным блоком `services.openssh` в `configuration.nix`: [пароль, ключи и AllowUsers](docs/ssh-access.md). Пакеты добавляются там же в `environment.systemPackages` или в `packages/*.nix`. Изменения сразу читаются обычным `nixos-rebuild`; коммит, обновление Git и lock-файлы для применения не нужны.
 
@@ -95,11 +95,22 @@ VPN-подписки, пароли, токены, SSH/VPN-ключи, брауз
 Чтобы получить новые общие модули с GitHub и сначала проверить сборку:
 
 ```sh
-sudo bash /etc/nixos/scripts/update.sh
+sudo bash /var/lib/nixos-bspwm/source/scripts/update.sh
 sudo nixos-rebuild switch
 ```
 
-Скрипт остановится при незакоммиченных изменениях общих файлов; локальный `configuration.nix` ему не мешает. Обновление стандартного канала в пределах 26.05: `sudo nix-channel --update`. При переходе на следующий выпуск обновляйте совместимую версию Home Manager в `sources.nix`. Исходные `system.stateVersion` и `homeStateVersion` при обычном обновлении оставляйте прежними.
+Скрипт сверяет общие файлы с установленной версией и остановится при локальных правках, чтобы их не перезаписать. Изменения в `configuration.nix` ему не мешают; этот файл сохраняется. Общий код обновляется отдельно от пакетов.
+
+Обновить пакеты **намеренно** в пределах 26.05:
+
+```sh
+sudo nix-channel --update
+sudo nixos-rebuild build -I nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos
+# После успешной проверки:
+sudo nixos-rebuild switch -I nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos
+```
+
+Именно эта операция может загрузить новые версии ядра и приложений. Для изменения SSH, hostname или списка служб она не нужна. При переходе на другой выпуск обновите совместимую версию Home Manager в `sources.nix`. Исходные `system.stateVersion` и `homeStateVersion` оставляйте прежними.
 
 ## Документация
 

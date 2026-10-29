@@ -53,11 +53,17 @@ target=$(realpath -m -- "$target")
 [ "$target" != / ] || { info 'Invalid path' 'The filesystem root cannot be the target.'; exit 1; }
 ui --title 'BSPWM setup' --yesno 'This wizard configures the desktop on an existing NixOS installation. Disk partitions will not be formatted. Your configuration will be backed up before any changes.\n\nContinue?' 0 0 || cancel
 replace_args=()
+native=false
 if [ -e "$target/flake.nix" ] || [ -d "$target/modules" ] || [ -e "$target/bspwm-repo" ]; then
-  ui --defaultno --title 'Existing configuration' --yesno 'Replace this desktop deployment with a normal /etc/nixos configuration?\n\nOld files will remain in a local root-only backup. Private modules, keys and credentials will NOT be imported. Select services again. SSH is off unless you enable it.' 0 0 || cancel
+  ui --defaultno --title 'Existing configuration' --yesno 'Replace this desktop deployment with a normal /etc/nixos configuration?\n\nOld files stay in a local root-only backup. Existing native settings are kept. An old flake deployment requires selecting services again; private modules and keys are not imported from it.' 0 0 || cancel
   replace_args=(--replace)
 fi
+if [ ! -e "$target/flake.nix" ] && [ -f "$target/configuration.nix" ] && grep -Eq '\./modules([/[:space:]]|$)' "$target/configuration.nix"; then native=true; fi
 profile_default=universal
+if "$native"; then
+  previous_profile=$(sed -nE 's|^[[:space:]]*\./profiles/([a-z0-9-]+)\.nix.*|\1|p' "$target/configuration.nix" | head -n 1)
+  case "$previous_profile" in universal|huawei-matebook-d16) profile_default=$previous_profile ;; esac
+fi
 if [ -f "$target/flake.nix" ]; then
   previous_profile=$(sed -nE 's/^[[:space:]]*profile = "([a-z0-9-]+)";.*/\1/p' "$target/flake.nix" | head -n 1)
   case "$previous_profile" in universal|huawei-matebook-d16) profile_default=$previous_profile ;; esac
@@ -75,7 +81,8 @@ hostname=$(hostname)
 settings_dir=$(mktemp -d)
 trap 'rm -rf -- "$settings_dir"' EXIT
 args=(--profile "$profile" --target "$target")
-{
+ssh_mode=off
+if ! "$native"; then
   while true; do
     username=$(input 'User account' 'Existing normal user name. The current password will be preserved:' "$username") || cancel
     if [[ "$username" =~ ^[a-z_][a-z0-9_-]*$ ]] && id "$username" >/dev/null 2>&1 && [ "$(id -u "$username")" -ge 1000 ]; then break; fi
@@ -139,7 +146,9 @@ PY
   if [ "$ssh_mode" = key ]; then
     summary="$summary\nBefore activating: add your public key in configuration.nix."
   fi
-}
+else
+  summary="Profile: $profile\nConfiguration directory: $target\nExisting configuration.nix and hardware settings will be preserved.\nGit, tests and installer scripts will live in /var/lib/nixos-bspwm/source."
+fi
 args+=(--user "$username" --hostname "$hostname" "${replace_args[@]}")
 mode=$(ui --stdout --title 'Review and install' --default-item build --menu "$summary\n\nSelect an action:" 0 0 3 \
   build 'Build without activating (recommended)' \
@@ -162,7 +171,7 @@ if [ "${pipeline_status[0]}" -ne 0 ] || [ "${pipeline_status[1]}" -ne 0 ] || [ "
 fi
 case "$mode" in
   switch) info 'Done' "Configuration activated. Reboot when convenient.\nLog: $log_file" ;;
-  build) info 'Build complete' "Built without activating. Apply with:\nsudo nixos-rebuild switch -I nixos-config=$target/configuration.nix\nLog: $log_file" ;;
+  build) info 'Build complete' "Built without activating. Apply with:\nsudo bash /var/lib/nixos-bspwm/source/scripts/activate.sh\nLog: $log_file" ;;
   prepare) info 'Files ready' "Configuration files prepared. Build with:\nsudo nixos-rebuild build -I nixos-config=$target/configuration.nix\nLog: $log_file" ;;
 esac
 clear

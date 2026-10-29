@@ -13,6 +13,13 @@ let cfg = config.bspwmBuild; in {
   ];
   services.bspwmRdp = { enable = lib.mkDefault true; allowedUsers = [ cfg.username ]; };
   nixpkgs.config.allowUnfree = true;
+  # Reuse the exact package source used for this generation. Updating a channel
+  # must not turn a later SSH-only edit into an unintended OS/kernel upgrade.
+  nix.nixPath = lib.mkDefault [
+    "nixpkgs=${builtins.storePath pkgs.path}"
+    "nixos-config=/etc/nixos/configuration.nix"
+  ];
+  nix.settings.nix-path = lib.mkDefault config.nix.nixPath;
   hardware.enableRedistributableFirmware = true;
   boot.loader.systemd-boot = { enable = lib.mkDefault true; configurationLimit = 2; };
   boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;

@@ -1,9 +1,14 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.services.bspwmRdp;
+  keyboard = pkgs.writeShellApplication {
+    name = "bspwm-keyboard-layout";
+    runtimeInputs = with pkgs; [ setxkbmap coreutils gawk util-linux ];
+    text = builtins.readFile ../dotfiles/scripts/keyboard-layout.sh;
+  };
   desktop = pkgs.writeShellApplication {
     name = "bspwm-rdp-desktop";
-    runtimeInputs = with pkgs; [ bspwm sxhkd systemd coreutils rofi setxkbmap xrdb xsetroot dunst ];
+    runtimeInputs = with pkgs; [ bspwm sxhkd systemd coreutils rofi setxkbmap xrdb xsetroot dunst dbus picom ];
     text = ''
       # The common desktop helpers assume one graphical session per user.
       # Give a clear explanation instead of killing another session's panel.
@@ -18,13 +23,19 @@ let
           exit 1
         fi
       done
-      setxkbmap -layout us,ru -option grp:alt_shift_toggle
-      dunst &
-      notification_pid=$!
-      ${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1 &
-      agent_pid=$!
+      # Home Manager's clipboard and desktop agents need the actual RDP display.
+      dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_ID BSPWM_RDP_SESSION
+      systemctl --user start graphical-session.target
+      ${keyboard}/bin/bspwm-keyboard-layout --watch &
+      keyboard_pid=$!
+      # The virtual RDP GPU commonly lacks accelerated GLX/vsync support.
+      systemctl --user stop picom.service bspwm-rdp-compositor.service 2>/dev/null || true
+      picom --config "$HOME/.config/picom/picom.conf" --backend xrender --no-vsync &
+      compositor_pid=$!
       cleanup() {
-        kill "$notification_pid" "$agent_pid" 2>/dev/null || true
+        kill "$keyboard_pid" "$compositor_pid" 2>/dev/null || true
+        systemctl --user stop graphical-session.target 2>/dev/null || true
+        systemctl --user unset-environment BSPWM_RDP_SESSION 2>/dev/null || true
       }
       trap cleanup EXIT
       bspwm &
@@ -34,12 +45,14 @@ let
     '';
   };
   session = pkgs.writeShellScript "bspwm-rdp-session" ''
-    unset DBUS_SESSION_BUS_ADDRESS SESSION_MANAGER
+    unset SESSION_MANAGER
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus"
+    export XAUTHORITY="''${XAUTHORITY:-$HOME/.Xauthority}"
     export XDG_SESSION_TYPE=x11
     export XDG_CURRENT_DESKTOP=bspwm
     export XDG_SESSION_DESKTOP=bspwm
     export BSPWM_RDP_SESSION=1
-    exec ${pkgs.dbus}/bin/dbus-run-session -- ${desktop}/bin/bspwm-rdp-desktop
+    exec ${desktop}/bin/bspwm-rdp-desktop
   '';
 in {
   options.services.bspwmRdp = {

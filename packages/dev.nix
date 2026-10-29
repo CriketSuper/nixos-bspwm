@@ -7,6 +7,7 @@ lib.mkIf config.bspwmBuild.development.enable {
     micro                   # Текстовый редактор
     nano                    # Текстовый редактор
     vscode                  # Редактор кода
+    dbeaver-bin             # Database client present in the original laptop setup
 
     # Языки программирования и компиляторы
     nodejs_24               # NodeJS

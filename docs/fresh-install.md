@@ -184,7 +184,7 @@ sudo cat /etc/nixos/hardware-configuration.nix
 При успешной сборке примените систему:
 
 ```sh
-sudo nixos-rebuild switch -I nixos-config=/etc/nixos/configuration.nix
+sudo bash /var/lib/nixos-bspwm/source/scripts/activate.sh
 sudo reboot
 ```
 
@@ -210,7 +210,7 @@ sudo ls -t /var/log/nixos-bspwm/
 Обновить копию репозитория и собрать систему:
 
 ```sh
-sudo bash /etc/nixos/scripts/update.sh
+sudo bash /var/lib/nixos-bspwm/source/scripts/update.sh
 sudo nixos-rebuild switch
 ```
 

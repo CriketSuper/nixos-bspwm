@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Refresh existing desktops after RandR changes, keeping windows and desktop IDs."""
+import argparse
 import fcntl
 import json
 import os
@@ -29,10 +30,55 @@ def configure_power(monitors):
     # the X11 session's original ten-minute idle timeout.
     if any(not re.match(r'^(eDP|LVDS)', name) for name in monitors):
         run('xset', 's', 'off')
+        run('xset', 'dpms', '0', '0', '0')
         run('xset', '-dpms')
     else:
         run('xset', 's', '600', '600')
         run('xset', 'dpms', '600', '600', '600')
+
+
+def power_inhibited(settings):
+    return bool(
+        'DPMS is Disabled' in settings
+        and re.search(r'timeout:\s+0\b', settings)
+        and re.search(r'Standby:\s+0\s+Suspend:\s+0\s+Off:\s+0\b', settings)
+    )
+
+
+def check_power(previous):
+    # Read cached RandR state; do not poll hardware or change display modes.
+    names = re.findall(
+        r'^(\S+) connected (?:primary )?\d+x\d+\+-?\d+\+-?\d+',
+        run('xrandr', '--current'), re.MULTILINE,
+    )
+    if not names:
+        return previous
+    external = any(not re.match(r'^(eDP|LVDS)', name) for name in names)
+    if external:
+        if previous is not True or not power_inhibited(run('xset', 'q')):
+            configure_power(names)
+            print('External display: restored idle timeout=0, DPMS timeouts=0, DPMS disabled.', flush=True)
+    elif previous is not False:
+        configure_power(names)
+        print('Laptop only: restored the ten-minute idle timeout.', flush=True)
+    return external
+
+
+def watch_power():
+    previous = None
+    last_error = None
+    while True:
+        try:
+            previous = check_power(previous)
+            last_error = None
+        except (RuntimeError, OSError) as error:
+            # The local X server may be absent before login or after logout.
+            message = str(error)
+            if message != last_error:
+                print(f'Display power check unavailable: {message}', flush=True)
+                last_error = message
+            previous = None
+        time.sleep(30)
 
 
 def sync():
@@ -117,8 +163,15 @@ def sync():
 
 
 if __name__ == '__main__':
-    lock_path = Path(os.environ.get('XDG_RUNTIME_DIR', str(Path.home()/'.cache'))) / 'monitor-sync.lock'
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with lock_path.open('a') as guard:
-        fcntl.flock(guard, fcntl.LOCK_EX)
-        sync()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--watch-power', action='store_true',
+                        help='Maintain the power policy on the local X11 display.')
+    args = parser.parse_args()
+    if args.watch_power:
+        watch_power()
+    else:
+        lock_path = Path(os.environ.get('XDG_RUNTIME_DIR', str(Path.home()/'.cache'))) / 'monitor-sync.lock'
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with lock_path.open('a') as guard:
+            fcntl.flock(guard, fcntl.LOCK_EX)
+            sync()
