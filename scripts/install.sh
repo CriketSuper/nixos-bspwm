@@ -36,7 +36,8 @@ Usage: sudo bash scripts/install.sh [options]
   --help           Show help
 Run from a clean, committed Git checkout on installed NixOS 26.05, x86_64/UEFI.
 Only tracked repository files and THIS PC's hardware config are deployed.
-Old private.nix, keys, vendor files and local settings are NOT imported.
+Migration from flakes does not import old private modules or keys.
+An existing native configuration keeps its own local files on THIS PC.
 Old files remain in a local root-only backup for rollback.
 HELP
 }
@@ -152,7 +153,7 @@ if "$native"; then
     name=$(basename "$local_file")
     [ -e "$stage/repo/$name" ] || cp -a -- "$local_file" "$stage/repo/$name"
   done
-  for local_dir in keys private vendor; do
+  for local_dir in local keys private vendor; do
     [ ! -d "$target/$local_dir" ] || cp -a -- "$target/$local_dir" "$stage/repo/$local_dir"
   done
   if "$profile_explicit"; then

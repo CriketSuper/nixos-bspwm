@@ -122,9 +122,11 @@ class MigrationTests(unittest.TestCase):
         (self.target / 'configuration.nix').write_text(original)
         (self.target / 'flake.nix').unlink()
         (self.target / 'hardware-configuration.nix').write_text(self.hardware)
+        (self.target / 'local/custom.nix').write_text('{ ... }: { networking.hostName = "my-pc"; }\n')
         result = self.install('--replace', '--mode', 'prepare')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual((self.target / 'configuration.nix').read_text(), original)
+        self.assertIn('my-pc', (self.target / 'local/custom.nix').read_text())
         self.assertFalse((self.target / '.git').exists())
 
     def test_runtime_manifest_ignores_local_settings_and_detects_shared_edits(self):
