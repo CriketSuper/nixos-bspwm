@@ -24,8 +24,12 @@ let
         fi
       done
       # Home Manager's clipboard and desktop agents need the actual RDP display.
-      dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_ID BSPWM_RDP_SESSION
-      systemctl --user start graphical-session.target
+      if ! dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_ID BSPWM_RDP_SESSION; then
+        printf 'Warning: could not export the desktop environment to user services.\n' >&2
+      fi
+      if ! systemctl --user start bspwm-rdp-session.target; then
+        printf 'Warning: could not start desktop agents; continuing with BSPWM.\n' >&2
+      fi
       ${keyboard}/bin/bspwm-keyboard-layout --watch &
       keyboard_pid=$!
       # The virtual RDP GPU commonly lacks accelerated GLX/vsync support.
@@ -34,7 +38,7 @@ let
       compositor_pid=$!
       cleanup() {
         kill "$keyboard_pid" "$compositor_pid" 2>/dev/null || true
-        systemctl --user stop graphical-session.target 2>/dev/null || true
+        systemctl --user stop bspwm-rdp-session.target 2>/dev/null || true
         systemctl --user unset-environment BSPWM_RDP_SESSION 2>/dev/null || true
       }
       trap cleanup EXIT
@@ -66,6 +70,14 @@ in {
     openFirewall = lib.mkOption { type = lib.types.bool; default = true; };
   };
   config = lib.mkIf cfg.enable {
+    # graphical-session.target refuses direct manual start/stop. A session
+    # target pulls it in as a dependency and owns its lifetime instead.
+    systemd.user.targets.bspwm-rdp-session = {
+      description = "BSPWM RDP session";
+      bindsTo = [ "graphical-session.target" ];
+      wants = [ "graphical-session-pre.target" ];
+      after = [ "graphical-session-pre.target" ];
+    };
     assertions = [{
       assertion = cfg.allowedUsers != [] && builtins.all (name:
         name != "root" && builtins.hasAttr name config.users.users && config.users.users.${name}.isNormalUser

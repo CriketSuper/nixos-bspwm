@@ -25,6 +25,7 @@ assert builtins.elem "nixos-config=/etc/nixos/configuration.nix" cfg.nix.nixPath
 assert builtins.elem "nixpkgs=${builtins.storePath (import nixpkgs {}).path}" cfg.nix.nixPath;
 assert cfg.nix.settings.nix-path == cfg.nix.nixPath;
 assert cfg.boot.kernelPackages.kernel.drvPath == (import nixpkgs {}).linuxPackages.kernel.drvPath;
+assert builtins.elem "graphical-session.target" cfg.systemd.user.targets.bspwm-rdp-session.bindsTo;
 assert cfg.networking.hostName == "other-pc";
 assert cfg.time.timeZone == "Etc/UTC";
 assert cfg.system.stateVersion == "25.05";
