@@ -46,7 +46,7 @@ class RdpStartupTests(unittest.TestCase):
                         self.assertIsNone(desktop.poll(), (root / 'session.log').read_text())
                         self.assertLess(time.monotonic(), deadline, (root / 'session.log').read_text())
                         time.sleep(.1)
-                    result = subprocess.run(['bspc', '-s', env['BSPWM_SOCKET'], 'query', '-M', '--names'],
+                    result = subprocess.run(['bspc', 'query', '-M', '--names'],
                                             env=env, capture_output=True, text=True, timeout=5)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertTrue(result.stdout.strip(), 'A working BSPWM monitor is required')
